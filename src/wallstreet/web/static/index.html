@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Wall Street War Room</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -106,8 +106,8 @@
   <!-- Terminal -->
   <div id="terminal-container"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
   <script>
     const setupEl  = document.getElementById('setup');
     const termEl   = document.getElementById('terminal-container');
@@ -138,11 +138,17 @@
         scrollback: 5000,
       });
 
-      const fitAddon = new window.FitAddon.FitAddon();
-      term.loadAddon(fitAddon);
+      // FitAddon: try multiple export paths for compatibility
+      let fitAddon = null;
+      if (window.FitAddon && window.FitAddon.FitAddon) {
+        fitAddon = new window.FitAddon.FitAddon();
+      } else if (window.FitAddon) {
+        fitAddon = new window.FitAddon();
+      }
+      if (fitAddon) term.loadAddon(fitAddon);
       term.open(termEl);
-      fitAddon.fit();
-      window.addEventListener('resize', () => fitAddon.fit());
+      if (fitAddon) fitAddon.fit();
+      window.addEventListener('resize', () => { if (fitAddon) fitAddon.fit(); });
 
       // Line buffer for user input
       let inputBuffer = '';
