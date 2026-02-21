@@ -7,7 +7,9 @@
       "Bash(source:*)",
       "Bash(pytest:*)",
       "Bash(curl:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push)"
     ]
   }
 }
