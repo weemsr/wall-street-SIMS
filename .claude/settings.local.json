@@ -5,7 +5,9 @@
       "Bash(python3:*)",
       "Bash(pip install:*)",
       "Bash(source:*)",
-      "Bash(pytest:*)"
+      "Bash(pytest:*)",
+      "Bash(curl:*)",
+      "Bash(git add:*)"
     ]
   }
 }
