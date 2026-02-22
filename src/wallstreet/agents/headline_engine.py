@@ -99,12 +99,12 @@ _EVENT_HEADLINES: dict[str, list[tuple[str, str, dict[str, str]]]] = {
         (
             "Crude Surges on OPEC Cuts — Energy Stocks Whipsaw",
             "mixed",
-            {"Energy": "volatile", "Consumer Staples": "negative"},
+            {"Energy": "volatile", "Consumer Staples": "negative", "Consumer Discretionary": "negative"},
         ),
         (
             "Oil Prices Spike: Energy Sector Rallies as Consumers Feel the Pinch",
             "mixed",
-            {"Energy": "positive", "Consumer Staples": "negative"},
+            {"Energy": "positive", "Consumer Staples": "negative", "Consumer Discretionary": "negative"},
         ),
     ],
     "Tech Earnings Miss": [
@@ -123,7 +123,7 @@ _EVENT_HEADLINES: dict[str, list[tuple[str, str, dict[str, str]]]] = {
         (
             "New Virus Variant Sparks Global Health Concerns and Market Jitters",
             "bearish",
-            {"Consumer Staples": "negative", "Energy": "negative"},
+            {"Consumer Staples": "negative", "Consumer Discretionary": "negative", "Energy": "negative", "Healthcare": "mixed"},
         ),
     ],
     "Surprise Rate Cut": [
@@ -158,7 +158,7 @@ _EVENT_HEADLINES: dict[str, list[tuple[str, str, dict[str, str]]]] = {
         (
             "Consumer Confidence Hits Multi-Year High, Boosting Retail Sector",
             "bullish",
-            {"Consumer Staples": "positive"},
+            {"Consumer Staples": "positive", "Consumer Discretionary": "positive"},
         ),
     ],
     "Crypto Crash": [
@@ -172,7 +172,7 @@ _EVENT_HEADLINES: dict[str, list[tuple[str, str, dict[str, str]]]] = {
         (
             "Global Supply Chain Disruptions Worsen, Squeezing Manufacturers",
             "bearish",
-            {"Industrials": "negative", "Consumer Staples": "negative"},
+            {"Industrials": "negative", "Consumer Staples": "negative", "Consumer Discretionary": "negative"},
         ),
     ],
     "Geopolitical Crisis": [
@@ -228,7 +228,7 @@ _EVENT_HEADLINES: dict[str, list[tuple[str, str, dict[str, str]]]] = {
         (
             "Housing Prices in Sharp Decline as Mortgage Defaults Rise",
             "bearish",
-            {"Financials": "negative", "Consumer Staples": "negative"},
+            {"Financials": "negative", "Consumer Staples": "negative", "Consumer Discretionary": "negative"},
         ),
     ],
     "Central Bank Surprise": [
@@ -242,7 +242,7 @@ _EVENT_HEADLINES: dict[str, list[tuple[str, str, dict[str, str]]]] = {
         (
             "Earnings Season Delivers: Companies Beat Expectations Across Sectors",
             "bullish",
-            {"Tech": "positive", "Financials": "positive"},
+            {"Tech": "positive", "Financials": "positive", "Healthcare": "positive"},
         ),
     ],
 }

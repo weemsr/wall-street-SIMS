@@ -36,7 +36,7 @@ class TestRulesBasedRiskCommittee:
         sample_macro_bull: MacroState,
         sample_portfolio: PortfolioState,
     ) -> None:
-        alloc = Allocation(weights={s: 20.0 for s in Sector})
+        alloc = Allocation(weights={s: 100.0 / len(Sector) for s in Sector})
         game = _make_game_state(sample_macro_bull, sample_portfolio)
         risk = self.agent.evaluate(alloc, sample_macro_bull, sample_portfolio, game)
         assert 1 <= risk.risk_score <= 3
@@ -47,9 +47,10 @@ class TestRulesBasedRiskCommittee:
         sample_portfolio: PortfolioState,
     ) -> None:
         alloc = Allocation(weights={
-            Sector.TECH: 70.0, Sector.ENERGY: 10.0,
-            Sector.FINANCIALS: 10.0, Sector.CONSUMER: 5.0,
-            Sector.INDUSTRIALS: 5.0,
+            Sector.TECH: 70.0, Sector.ENERGY: 5.0,
+            Sector.FINANCIALS: 5.0, Sector.CONSUMER: 5.0,
+            Sector.CONSUMER_DISC: 5.0, Sector.INDUSTRIALS: 5.0,
+            Sector.HEALTHCARE: 5.0,
         })
         game = _make_game_state(sample_macro_bull, sample_portfolio)
         risk = self.agent.evaluate(alloc, sample_macro_bull, sample_portfolio, game)
@@ -68,11 +69,12 @@ class TestRulesBasedRiskCommittee:
             total_value=1_000_000.0,
             week=5,
         )
-        # 70% in cyclicals (Tech + Industrials + Energy)
+        # High cyclical exposure (Tech + Industrials + Energy + Consumer Disc)
         alloc = Allocation(weights={
-            Sector.TECH: 30.0, Sector.ENERGY: 25.0,
-            Sector.FINANCIALS: 5.0, Sector.CONSUMER: 10.0,
-            Sector.INDUSTRIALS: 30.0,
+            Sector.TECH: 25.0, Sector.ENERGY: 20.0,
+            Sector.FINANCIALS: 5.0, Sector.CONSUMER: 5.0,
+            Sector.CONSUMER_DISC: 15.0, Sector.INDUSTRIALS: 25.0,
+            Sector.HEALTHCARE: 5.0,
         })
         game = _make_game_state(macro, portfolio)
         risk = self.agent.evaluate(alloc, macro, portfolio, game)
@@ -93,8 +95,9 @@ class TestRulesBasedRiskCommittee:
         )
         alloc = Allocation(weights={
             Sector.TECH: 50.0, Sector.ENERGY: 10.0,
-            Sector.FINANCIALS: 20.0, Sector.CONSUMER: 10.0,
-            Sector.INDUSTRIALS: 10.0,
+            Sector.FINANCIALS: 10.0, Sector.CONSUMER: 10.0,
+            Sector.CONSUMER_DISC: 5.0, Sector.INDUSTRIALS: 10.0,
+            Sector.HEALTHCARE: 5.0,
         })
         game = _make_game_state(macro, portfolio)
         risk = self.agent.evaluate(alloc, macro, portfolio, game)
@@ -114,11 +117,12 @@ class TestRulesBasedRiskCommittee:
             total_value=1_000_000.0,
             week=3,
         )
-        # gross = 80+30+20+20+50 = 200% -> extreme leverage
+        # gross = 80+20+15+15+10+50+10 = 200% -> extreme leverage
         alloc = Allocation(weights={
-            Sector.TECH: 80.0, Sector.ENERGY: 30.0,
-            Sector.FINANCIALS: 20.0, Sector.CONSUMER: 20.0,
-            Sector.INDUSTRIALS: -50.0,
+            Sector.TECH: 80.0, Sector.ENERGY: 20.0,
+            Sector.FINANCIALS: 15.0, Sector.CONSUMER: 15.0,
+            Sector.CONSUMER_DISC: 10.0, Sector.INDUSTRIALS: -50.0,
+            Sector.HEALTHCARE: 10.0,
         })
         game = _make_game_state(macro, portfolio)
         risk = self.agent.evaluate(alloc, macro, portfolio, game)
@@ -139,9 +143,10 @@ class TestRulesBasedRiskCommittee:
             week=3,
         )
         alloc = Allocation(weights={
-            Sector.TECH: 40.0, Sector.ENERGY: 30.0,
-            Sector.FINANCIALS: 20.0, Sector.CONSUMER: 30.0,
-            Sector.INDUSTRIALS: -20.0,
+            Sector.TECH: 30.0, Sector.ENERGY: 25.0,
+            Sector.FINANCIALS: 15.0, Sector.CONSUMER: 25.0,
+            Sector.CONSUMER_DISC: 5.0, Sector.INDUSTRIALS: -15.0,
+            Sector.HEALTHCARE: 15.0,
         })
         game = _make_game_state(macro, portfolio)
         risk = self.agent.evaluate(alloc, macro, portfolio, game)
@@ -162,9 +167,10 @@ class TestRulesBasedRiskCommittee:
             week=3,
         )
         alloc = Allocation(weights={
-            Sector.TECH: 40.0, Sector.ENERGY: 30.0,
-            Sector.FINANCIALS: 20.0, Sector.CONSUMER: 30.0,
-            Sector.INDUSTRIALS: -20.0,
+            Sector.TECH: 30.0, Sector.ENERGY: 25.0,
+            Sector.FINANCIALS: 15.0, Sector.CONSUMER: 25.0,
+            Sector.CONSUMER_DISC: 5.0, Sector.INDUSTRIALS: -15.0,
+            Sector.HEALTHCARE: 15.0,
         })
         game = _make_game_state(macro, portfolio)
         risk = self.agent.evaluate(alloc, macro, portfolio, game)
@@ -184,8 +190,8 @@ class TestRulesBasedRiskCommittee:
             total_value=1_000_000.0,
             week=3,
         )
-        # 8% per sector = 40% invested, 60% cash
-        alloc = Allocation(weights={s: 8.0 for s in Sector})
+        # ~5.7% per sector = 40% invested, 60% cash
+        alloc = Allocation(weights={s: 5.7 for s in Sector})
         game = _make_game_state(macro, portfolio)
         risk = self.agent.evaluate(alloc, macro, portfolio, game)
         assert any("cash" in w.lower() for w in risk.warnings)
@@ -198,13 +204,15 @@ class TestRulesBasedRiskCommittee:
         """Score always between 1 and 10."""
         for tech_pct in range(0, 101, 10):
             remaining = 100 - tech_pct
-            per_other = remaining / 4
+            per_other = remaining / 6
             alloc = Allocation(weights={
                 Sector.TECH: float(tech_pct),
                 Sector.ENERGY: per_other,
                 Sector.FINANCIALS: per_other,
                 Sector.CONSUMER: per_other,
+                Sector.CONSUMER_DISC: per_other,
                 Sector.INDUSTRIALS: per_other,
+                Sector.HEALTHCARE: per_other,
             })
             game = _make_game_state(sample_macro_bull, sample_portfolio)
             risk = self.agent.evaluate(

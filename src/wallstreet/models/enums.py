@@ -9,7 +9,9 @@ class Sector(str, Enum):
     ENERGY = "Energy"
     FINANCIALS = "Financials"
     CONSUMER = "Consumer Staples"
+    CONSUMER_DISC = "Consumer Discretionary"
     INDUSTRIALS = "Industrials"
+    HEALTHCARE = "Healthcare"
 
 
 class Regime(str, Enum):

@@ -45,7 +45,7 @@ def _make_week_result(week: int, returns: dict[Sector, float]) -> WeekResult:
         rate_direction=RateDirection.STABLE,
         week=week,
     )
-    alloc = Allocation(weights={s: 20.0 for s in Sector})
+    alloc = Allocation(weights={s: 100.0 / len(Sector) for s in Sector})
     return WeekResult(
         week=week,
         macro_state=macro,
@@ -91,7 +91,7 @@ class TestRivalPMAllStrategies:
             assert set(alloc.weights.keys()) == set(Sector)
 
     def test_all_sectors_covered(self) -> None:
-        """Each strategy allocates to all 5 sectors."""
+        """Each strategy allocates to all 7 sectors."""
         macro = MacroState(
             regime=Regime.BEAR,
             volatility_state=VolatilityState.HIGH,

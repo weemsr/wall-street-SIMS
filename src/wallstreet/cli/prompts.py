@@ -14,7 +14,8 @@ console = Console()
 
 SECTOR_ORDER: list[Sector] = [
     Sector.TECH, Sector.ENERGY, Sector.FINANCIALS,
-    Sector.CONSUMER, Sector.INDUSTRIALS,
+    Sector.CONSUMER, Sector.CONSUMER_DISC, Sector.INDUSTRIALS,
+    Sector.HEALTHCARE,
 ]
 
 
@@ -35,8 +36,8 @@ def prompt_allocation(
     sector_names = " ".join(s.value for s in SECTOR_ORDER)
     _print(f"[bold]Enter allocation (% for each sector, 0-100% total):[/bold]")
     _print(f"[dim]  Order: {sector_names}[/dim]")
-    _print(f"[dim]  Example: 20 20 20 20 20  (fully invested)[/dim]")
-    _print(f"[dim]          10 10 10 10 10  (50% invested, 50% cash)[/dim]")
+    _print(f"[dim]  Example: 15 15 15 15 10 15 15  (fully invested)[/dim]")
+    _print(f"[dim]          8 8 8 8 5 8 5  (50% invested, 50% cash)[/dim]")
     _print(f"[dim]  Negative = short (e.g. 40 30 20 30 -20). Max short: -50% per sector.[/dim]")
     _print(f"[dim]  Gross exposure (sum of |weights|) capped at 200%.[/dim]")
 
@@ -44,13 +45,13 @@ def prompt_allocation(
         try:
             raw = _input("[bold cyan]> [/bold cyan]").strip()
             if not raw:
-                _print("[red]Please enter 5 space-separated numbers.[/red]")
+                _print("[red]Please enter 7 space-separated numbers.[/red]")
                 continue
 
             parts = raw.split()
-            if len(parts) != 5:
+            if len(parts) != 7:
                 _print(
-                    f"[red]Expected 5 values, got {len(parts)}. "
+                    f"[red]Expected 7 values, got {len(parts)}. "
                     f"Enter percentages for: {sector_names}[/red]"
                 )
                 continue

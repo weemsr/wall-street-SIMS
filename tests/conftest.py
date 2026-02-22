@@ -53,7 +53,9 @@ def sample_allocation_concentrated() -> Allocation:
             Sector.ENERGY: 10.0,
             Sector.FINANCIALS: 10.0,
             Sector.CONSUMER: 5.0,
+            Sector.CONSUMER_DISC: 0.0,
             Sector.INDUSTRIALS: 5.0,
+            Sector.HEALTHCARE: 0.0,
         }
     )
 

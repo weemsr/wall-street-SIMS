@@ -60,7 +60,8 @@ def display_week_header(week: int, total_weeks: int, con: Console | None = None)
     """Show month divider."""
     c = con or console
     c.print()
-    c.print(Rule(f"[bold] MONTH {week} of {total_weeks} [/bold]"))
+    quarter = (week - 1) // 3 + 1
+    c.print(Rule(f"[bold] MONTH {week} (Q{quarter}) of {total_weeks} [/bold]"))
     c.print()
 
 
@@ -178,7 +179,8 @@ def display_risk_assessment(risk: RiskAssessment, con: Console | None = None) ->
 def display_week_results(week_result: WeekResult, con: Console | None = None) -> None:
     """Show results after a week of play."""
     c = con or console
-    table = Table(title=f"Month {week_result.week} Results")
+    quarter = (week_result.week - 1) // 3 + 1
+    table = Table(title=f"Month {week_result.week} (Q{quarter}) Results")
     table.add_column("Sector", style="bold")
     table.add_column("Return", justify="right")
     table.add_column("Weight", justify="right")
@@ -320,7 +322,11 @@ def display_game_list(games: list[dict], con: Console | None = None) -> None:
     table.add_column("Created")
 
     for g in games:
-        status = "Complete" if g["is_complete"] else f"Month {g['current_week']}/{g['total_weeks']}"
+        if g["is_complete"]:
+            status = "Complete"
+        else:
+            q = (g['current_week'] - 1) // 3 + 1
+            status = f"Month {g['current_week']} (Q{q})/{g['total_weeks']}"
         final_val = f"${g['final_value']:,.0f}" if g["final_value"] else "-"
         sharpe = f"{g['sharpe_ratio']:.3f}" if g["sharpe_ratio"] is not None else "-"
         table.add_row(

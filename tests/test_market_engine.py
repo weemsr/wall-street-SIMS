@@ -110,9 +110,12 @@ class TestApplyEvents:
         event = ShockEvent(
             template_name="Test",
             description="test",
-            sector_effects={Sector.TECH: 0.05, Sector.ENERGY: -0.03,
-                            Sector.FINANCIALS: 0.0, Sector.CONSUMER: 0.0,
-                            Sector.INDUSTRIALS: 0.0},
+            sector_effects={
+                Sector.TECH: 0.05, Sector.ENERGY: -0.03,
+                Sector.FINANCIALS: 0.0, Sector.CONSUMER: 0.0,
+                Sector.CONSUMER_DISC: 0.0, Sector.INDUSTRIALS: 0.0,
+                Sector.HEALTHCARE: 0.0,
+            },
             vol_impact=0.0,
             week=1,
         )
@@ -126,9 +129,12 @@ class TestApplyEvents:
         event = ShockEvent(
             template_name="Huge",
             description="test",
-            sector_effects={Sector.TECH: 0.10, Sector.ENERGY: 0.0,
-                            Sector.FINANCIALS: 0.0, Sector.CONSUMER: 0.0,
-                            Sector.INDUSTRIALS: 0.0},
+            sector_effects={
+                Sector.TECH: 0.10, Sector.ENERGY: 0.0,
+                Sector.FINANCIALS: 0.0, Sector.CONSUMER: 0.0,
+                Sector.CONSUMER_DISC: 0.0, Sector.INDUSTRIALS: 0.0,
+                Sector.HEALTHCARE: 0.0,
+            },
             vol_impact=0.0,
             week=1,
         )

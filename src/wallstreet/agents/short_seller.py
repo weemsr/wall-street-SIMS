@@ -9,7 +9,7 @@ from wallstreet.models.narrative import ShortThesis
 from wallstreet.models.portfolio import Allocation
 
 # Sectors classified as cyclical (sensitive to economic downturns)
-_CYCLICAL_SECTORS = {Sector.TECH, Sector.ENERGY, Sector.INDUSTRIALS}
+_CYCLICAL_SECTORS = {Sector.TECH, Sector.ENERGY, Sector.INDUSTRIALS, Sector.CONSUMER_DISC}
 
 # Rate-sensitive sectors
 _RATE_SENSITIVE = {Sector.TECH, Sector.FINANCIALS}
@@ -42,11 +42,23 @@ _CONCENTRATION_CRITIQUES: dict[Sector, list[str]] = {
         "Hiding in consumer stocks won't save this portfolio from macro reality.",
         "Consumer concentration at these levels ignores the margin compression story entirely.",
     ],
+    Sector.CONSUMER_DISC: [
+        "Massive discretionary exposure with consumer sentiment weakening? This is a short seller's dream.",
+        "Concentrated in consumer discretionary as spending decelerates. We smell blood.",
+        "This discretionary bet ignores the reality of tightening household budgets.",
+        "Overweight discretionary into a softening consumer — classic late-cycle mistake.",
+    ],
     Sector.INDUSTRIALS: [
         "Industrials overweight in this cycle is a textbook value trap. We're short.",
         "Heavy industrial exposure with PMIs rolling over. This portfolio is fighting the data.",
         "Oversized industrials bet ignores the CapEx slowdown that's already underway.",
         "This kind of industrial concentration is what happens when a PM reads last quarter's data.",
+    ],
+    Sector.HEALTHCARE: [
+        "Healthcare concentration at these levels is a regulatory risk landmine.",
+        "Overloaded on healthcare — one drug trial failure and this portfolio craters.",
+        "Hiding in healthcare won't protect you when reimbursement cuts hit.",
+        "This healthcare bet ignores the political headwinds building against the sector.",
     ],
 }
 
@@ -70,6 +82,14 @@ _REGIME_MISALIGNMENT_CRITIQUES: dict[Sector, list[str]] = {
     Sector.CONSUMER: [
         "Consumer stocks won't be the safe haven this PM thinks. Spending is already rolling over.",
         "Overweight consumer heading into a spending cliff. Defensive positioning isn't always safe.",
+    ],
+    Sector.CONSUMER_DISC: [
+        "Consumer discretionary overweight in a recession? Consumers are cutting back — this position is toast.",
+        "Loading up on discretionary spending stocks while wallets tighten. We're building our short book.",
+    ],
+    Sector.HEALTHCARE: [
+        "Healthcare overweight during recession — less defensive than you think when budgets get cut.",
+        "Leaning into healthcare during a downturn ignores the elective procedure slowdown underway.",
     ],
 }
 
@@ -97,9 +117,17 @@ _MOMENTUM_REVERSAL_CRITIQUES: dict[Sector, list[str]] = {
         "Consumer run-up has this PM complacent. Margin pressures are building underneath.",
         "Chasing consumer momentum into stretched valuations. We see a reversal ahead.",
     ],
+    Sector.CONSUMER_DISC: [
+        "Discretionary stocks surged and this PM chased the rally. Retail sentiment always peaks before the fall.",
+        "Consumer discretionary momentum is extended. This overweight is buying the consensus, not the opportunity.",
+    ],
     Sector.INDUSTRIALS: [
         "Industrials momentum is extended. This overweight position is late to the party.",
         "Industrial rally is long in the tooth. Overweight here is buying the consensus, not the opportunity.",
+    ],
+    Sector.HEALTHCARE: [
+        "Healthcare rally is fading and this PM is still overweight. Biotech momentum doesn't last.",
+        "Chasing healthcare momentum into peak valuations. Regulatory risk looms large.",
     ],
 }
 
@@ -120,9 +148,17 @@ _SHORT_SQUEEZE_CRITIQUES: dict[Sector, list[str]] = {
         "Consumer shorts in a healthy economy? This PM is overthinking it. Spending data disagrees.",
         "Shorting consumer staples — the definition of picking up pennies in front of a steamroller.",
     ],
+    Sector.CONSUMER_DISC: [
+        "Shorting consumer discretionary in a recovery? Pent-up demand will squeeze this position hard.",
+        "Betting against discretionary spending as confidence rebounds. This short will get painful fast.",
+    ],
     Sector.INDUSTRIALS: [
         "Short industrials while CapEx is expanding? This PM is on the wrong side of the cycle.",
         "Betting against industrials here is fighting the order book. We're positioned for the squeeze.",
+    ],
+    Sector.HEALTHCARE: [
+        "Short healthcare during a flight to quality? This PM is about to learn about defensive squeezes.",
+        "Betting against healthcare in this environment is contrarian for the sake of it. Bad trade.",
     ],
 }
 

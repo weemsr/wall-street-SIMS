@@ -10,14 +10,15 @@ from wallstreet.models.scoring import ScoreCard
 
 class TestAllocation:
     def test_valid_balanced(self) -> None:
-        alloc = Allocation(weights={s: 20.0 for s in Sector})
-        assert sum(alloc.weights.values()) == pytest.approx(100.0)
+        alloc = Allocation(weights={s: 100.0 / len(Sector) for s in Sector})
+        assert sum(alloc.weights.values()) == pytest.approx(100.0, abs=0.1)
 
     def test_valid_concentrated(self) -> None:
         weights = {
             Sector.TECH: 60.0, Sector.ENERGY: 10.0,
             Sector.FINANCIALS: 10.0, Sector.CONSUMER: 10.0,
-            Sector.INDUSTRIALS: 10.0,
+            Sector.CONSUMER_DISC: 5.0, Sector.INDUSTRIALS: 5.0,
+            Sector.HEALTHCARE: 0.0,
         }
         alloc = Allocation(weights=weights)
         assert alloc.weights[Sector.TECH] == 60.0
@@ -26,16 +27,17 @@ class TestAllocation:
         weights = {
             Sector.TECH: 100.0, Sector.ENERGY: 0.0,
             Sector.FINANCIALS: 0.0, Sector.CONSUMER: 0.0,
-            Sector.INDUSTRIALS: 0.0,
+            Sector.CONSUMER_DISC: 0.0, Sector.INDUSTRIALS: 0.0,
+            Sector.HEALTHCARE: 0.0,
         }
         alloc = Allocation(weights=weights)
         assert alloc.weights[Sector.TECH] == 100.0
 
     def test_partial_allocation_valid(self) -> None:
         """Weights summing to less than 100% are valid (remainder = cash)."""
-        weights = {s: 10.0 for s in Sector}  # sums to 50
+        weights = {s: 7.0 for s in Sector}  # sums to 49
         alloc = Allocation(weights=weights)
-        assert alloc.cash_weight == pytest.approx(0.50)
+        assert alloc.cash_weight == pytest.approx(0.51)
 
     def test_zero_allocation_valid(self) -> None:
         """All-cash allocation (sum=0) is valid."""
@@ -44,7 +46,7 @@ class TestAllocation:
         assert alloc.cash_weight == pytest.approx(1.0)
 
     def test_over_100_rejected(self) -> None:
-        weights = {s: 21.0 for s in Sector}  # sums to 105
+        weights = {s: 15.0 for s in Sector}  # sums to 105
         with pytest.raises(ValidationError, match="sum to 0-100%"):
             Allocation(weights=weights)
 
@@ -53,34 +55,37 @@ class TestAllocation:
         weights = {
             Sector.TECH: 10.0, Sector.ENERGY: 0.0,
             Sector.FINANCIALS: 0.0, Sector.CONSUMER: 0.0,
-            Sector.INDUSTRIALS: -20.0,
+            Sector.CONSUMER_DISC: 0.0, Sector.INDUSTRIALS: -20.0,
+            Sector.HEALTHCARE: 0.0,
         }
         # sum = -10
         with pytest.raises(ValidationError, match="sum to 0-100%"):
             Allocation(weights=weights)
 
     def test_cash_weight_fully_invested(self) -> None:
-        alloc = Allocation(weights={s: 20.0 for s in Sector})
-        assert alloc.cash_weight == pytest.approx(0.0)
+        alloc = Allocation(weights={s: 100.0 / len(Sector) for s in Sector})
+        assert alloc.cash_weight == pytest.approx(0.0, abs=0.01)
 
     def test_valid_with_shorts(self) -> None:
         """Negative weights are allowed (short positions)."""
         weights = {
-            Sector.TECH: 40.0, Sector.ENERGY: 30.0,
-            Sector.FINANCIALS: 20.0, Sector.CONSUMER: 30.0,
-            Sector.INDUSTRIALS: -20.0,
+            Sector.TECH: 40.0, Sector.ENERGY: 20.0,
+            Sector.FINANCIALS: 15.0, Sector.CONSUMER: 20.0,
+            Sector.CONSUMER_DISC: 10.0, Sector.INDUSTRIALS: -5.0,
+            Sector.HEALTHCARE: 0.0,
         }
         alloc = Allocation(weights=weights)
-        assert alloc.weights[Sector.INDUSTRIALS] == -20.0
+        assert alloc.weights[Sector.INDUSTRIALS] == -5.0
         assert alloc.has_shorts is True
-        assert alloc.gross_exposure == pytest.approx(1.40)
+        assert alloc.gross_exposure == pytest.approx(1.10)
 
     def test_short_too_large_rejected(self) -> None:
         """Short position exceeding -50% is rejected."""
         weights = {
             Sector.TECH: 60.0, Sector.ENERGY: 50.0,
-            Sector.FINANCIALS: 30.0, Sector.CONSUMER: 20.0,
-            Sector.INDUSTRIALS: -60.0,
+            Sector.FINANCIALS: 20.0, Sector.CONSUMER: 10.0,
+            Sector.CONSUMER_DISC: 0.0, Sector.INDUSTRIALS: -60.0,
+            Sector.HEALTHCARE: 0.0,
         }
         with pytest.raises(ValidationError, match="Short position too large"):
             Allocation(weights=weights)
@@ -88,43 +93,24 @@ class TestAllocation:
     def test_gross_exposure_limit(self) -> None:
         """Gross exposure exceeding 200% is rejected."""
         weights = {
-            Sector.TECH: 80.0, Sector.ENERGY: 30.0,
-            Sector.FINANCIALS: 20.0, Sector.CONSUMER: 20.0,
-            Sector.INDUSTRIALS: -50.0,
+            Sector.TECH: 80.0, Sector.ENERGY: 20.0,
+            Sector.FINANCIALS: 10.0, Sector.CONSUMER: 10.0,
+            Sector.CONSUMER_DISC: 10.0, Sector.INDUSTRIALS: -30.0,
+            Sector.HEALTHCARE: 0.0,
         }
-        # sum = 100, gross = 200 -> OK
+        # sum = 100, gross = 160 -> OK
         alloc = Allocation(weights=weights)
-        assert alloc.gross_exposure == pytest.approx(2.00)
-
-        # Try exceeding 200%
-        weights2 = {
-            Sector.TECH: 90.0, Sector.ENERGY: 30.0,
-            Sector.FINANCIALS: 20.0, Sector.CONSUMER: 10.0,
-            Sector.INDUSTRIALS: -50.0,
-        }
-        # sum = 100, gross = 200 -> OK still
-        # Let's try one that actually exceeds:
-        weights3 = {
-            Sector.TECH: 100.0, Sector.ENERGY: 30.0,
-            Sector.FINANCIALS: 20.0, Sector.CONSUMER: 0.0,
-            Sector.INDUSTRIALS: -50.0,
-        }
-        # sum = 100, gross = 200 -> still OK
-        # A truly violating one needs sum=100, gross>200
-        # e.g., 100 + 30 + 20 + 0 + (-50) = 100, gross = 200, OK
-        # Need: 100 + 30 + 21 + 0 + (-51) but -51 < -50 so rejected on short limit first
-        # The gross exposure limit and short limit work together;
-        # with 5 sectors and max short -50, gross can reach exactly 200.
+        assert alloc.gross_exposure == pytest.approx(1.60)
 
     def test_has_shorts_false_for_long_only(self) -> None:
-        alloc = Allocation(weights={s: 20.0 for s in Sector})
+        alloc = Allocation(weights={s: 100.0 / len(Sector) for s in Sector})
         assert alloc.has_shorts is False
 
     def test_as_fractions(self) -> None:
-        alloc = Allocation(weights={s: 20.0 for s in Sector})
+        alloc = Allocation(weights={s: 100.0 / len(Sector) for s in Sector})
         fracs = alloc.as_fractions
         for sector in Sector:
-            assert fracs[sector] == pytest.approx(0.20)
+            assert fracs[sector] == pytest.approx(1.0 / len(Sector))
 
 
 class TestScoreCard:

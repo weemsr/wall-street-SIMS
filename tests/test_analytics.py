@@ -96,10 +96,10 @@ class TestDrawdownSeries:
 
 class TestConcentrationScore:
     def test_equal_weight(self) -> None:
-        """Equal weight across 5 sectors: HHI = 5 * 0.2^2 = 0.20."""
-        alloc = Allocation(weights={s: 20.0 for s in Sector})
+        """Equal weight across 7 sectors: HHI = 7 * (1/7)^2 ≈ 0.143."""
+        alloc = Allocation(weights={s: 100.0 / len(Sector) for s in Sector})
         hhi = compute_concentration_score(alloc)
-        assert abs(hhi - 0.2) < 0.001
+        assert hhi == pytest.approx(1.0 / len(Sector), abs=0.001)
 
     def test_concentrated(self) -> None:
         """100% in one sector: HHI = 1.0."""
@@ -108,23 +108,29 @@ class TestConcentrationScore:
             Sector.ENERGY: 0.0,
             Sector.FINANCIALS: 0.0,
             Sector.CONSUMER: 0.0,
+            Sector.CONSUMER_DISC: 0.0,
             Sector.INDUSTRIALS: 0.0,
+            Sector.HEALTHCARE: 0.0,
         })
         hhi = compute_concentration_score(alloc)
         assert abs(hhi - 1.0) < 0.001
 
     def test_moderate_concentration(self) -> None:
-        """50/12.5/12.5/12.5/12.5 allocation."""
+        """50% in one sector, rest split equally."""
+        other_pct = 50.0 / 6  # ~8.333 each
         alloc = Allocation(weights={
             Sector.TECH: 50.0,
-            Sector.ENERGY: 12.5,
-            Sector.FINANCIALS: 12.5,
-            Sector.CONSUMER: 12.5,
-            Sector.INDUSTRIALS: 12.5,
+            Sector.ENERGY: other_pct,
+            Sector.FINANCIALS: other_pct,
+            Sector.CONSUMER: other_pct,
+            Sector.CONSUMER_DISC: other_pct,
+            Sector.INDUSTRIALS: other_pct,
+            Sector.HEALTHCARE: other_pct,
         })
         hhi = compute_concentration_score(alloc)
-        # 0.5^2 + 4*0.125^2 = 0.25 + 0.0625 = 0.3125
-        assert abs(hhi - 0.3125) < 0.001
+        # 0.5^2 + 6*(50/6/100)^2 = 0.25 + 6*(1/12)^2 = 0.25 + 6/144 ≈ 0.2917
+        expected = 0.5**2 + 6 * (other_pct / 100.0)**2
+        assert hhi == pytest.approx(expected, abs=0.001)
 
 
     def test_short_position_concentration(self) -> None:
@@ -132,21 +138,23 @@ class TestConcentrationScore:
         alloc = Allocation(weights={
             Sector.TECH: 40.0, Sector.ENERGY: 30.0,
             Sector.FINANCIALS: 20.0, Sector.CONSUMER: 30.0,
-            Sector.INDUSTRIALS: -20.0,
+            Sector.CONSUMER_DISC: 0.0, Sector.INDUSTRIALS: -20.0,
+            Sector.HEALTHCARE: 0.0,
         })
         hhi = compute_concentration_score(alloc)
-        # gross = 1.4, normalized weights: 40/140, 30/140, 20/140, 30/140, 20/140
-        assert 0.20 <= hhi <= 0.25
+        # gross = 1.4, normalized weights: 40/140, 30/140, 20/140, 30/140, 0, 20/140, 0
+        assert 0.14 <= hhi <= 0.25
 
     def test_equal_long_short_concentration(self) -> None:
         """Balanced long/short portfolio HHI stays in expected range."""
         alloc = Allocation(weights={
             Sector.TECH: 40.0, Sector.ENERGY: 40.0,
             Sector.FINANCIALS: 20.0, Sector.CONSUMER: 20.0,
-            Sector.INDUSTRIALS: -20.0,
+            Sector.CONSUMER_DISC: 0.0, Sector.INDUSTRIALS: -20.0,
+            Sector.HEALTHCARE: 0.0,
         })
         hhi = compute_concentration_score(alloc)
-        assert 0.20 <= hhi <= 0.25
+        assert 0.14 <= hhi <= 0.25
 
 
 class TestExpandedMetrics:
@@ -155,7 +163,7 @@ class TestExpandedMetrics:
         values = [1_000_000, 1_020_000, 990_000, 1_010_000, 1_050_000]
         returns = [0.02, -0.0294, 0.0202, 0.0396]
         allocs = [
-            Allocation(weights={s: 20.0 for s in Sector})
+            Allocation(weights={s: 100.0 / len(Sector) for s in Sector})
             for _ in returns
         ]
         metrics = compute_expanded_metrics(values, returns, allocs)
@@ -165,7 +173,7 @@ class TestExpandedMetrics:
         assert len(metrics.drawdown_series) == len(values)
         assert len(metrics.concentration_scores) == len(allocs)
         assert len(metrics.gross_exposure_series) == len(allocs)
-        assert metrics.current_concentration == 0.2  # equal weight
+        assert metrics.current_concentration == pytest.approx(1.0 / len(Sector), abs=0.001)
         assert metrics.current_gross_exposure == pytest.approx(1.0)
 
     def test_integration_with_shorts(self) -> None:
@@ -176,10 +184,11 @@ class TestExpandedMetrics:
             Allocation(weights={
                 Sector.TECH: 40.0, Sector.ENERGY: 30.0,
                 Sector.FINANCIALS: 20.0, Sector.CONSUMER: 30.0,
-                Sector.INDUSTRIALS: -20.0,
+                Sector.CONSUMER_DISC: 0.0, Sector.INDUSTRIALS: -20.0,
+                Sector.HEALTHCARE: 0.0,
             })
             for _ in returns
         ]
         metrics = compute_expanded_metrics(values, returns, allocs)
         assert metrics.current_gross_exposure == pytest.approx(1.40)
-        assert 0.20 <= metrics.current_concentration <= 0.25
+        assert 0.14 <= metrics.current_concentration <= 0.25

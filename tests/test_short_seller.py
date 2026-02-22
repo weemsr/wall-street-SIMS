@@ -44,9 +44,10 @@ class TestShortSellerAgent:
     def test_concentration_attack(self) -> None:
         """Sector > 40% triggers concentration attack."""
         alloc = Allocation(weights={
-            Sector.TECH: 60.0, Sector.ENERGY: 10.0,
-            Sector.FINANCIALS: 10.0, Sector.CONSUMER: 10.0,
-            Sector.INDUSTRIALS: 10.0,
+            Sector.TECH: 60.0, Sector.ENERGY: 8.0,
+            Sector.FINANCIALS: 8.0, Sector.CONSUMER: 8.0,
+            Sector.CONSUMER_DISC: 8.0, Sector.INDUSTRIALS: 4.0,
+            Sector.HEALTHCARE: 4.0,
         })
         game = _make_game_state(self.bull_macro)
         result = self.agent.analyze(alloc, self.bull_macro, game, random.Random(42))
@@ -56,7 +57,7 @@ class TestShortSellerAgent:
 
     def test_no_attack_balanced(self) -> None:
         """Balanced allocation in bull market yields no attack."""
-        alloc = Allocation(weights={s: 20.0 for s in Sector})
+        alloc = Allocation(weights={s: 100.0 / len(Sector) for s in Sector})
         game = _make_game_state(self.bull_macro)
         result = self.agent.analyze(alloc, self.bull_macro, game, random.Random(42))
         assert result is None
@@ -69,21 +70,20 @@ class TestShortSellerAgent:
             rate_direction=RateDirection.FALLING,
             week=5,
         )
+        # Use weights below 40% to avoid concentration firing first,
+        # but above 25% for at least one cyclical to trigger regime misalignment
         alloc = Allocation(weights={
-            Sector.TECH: 10.0, Sector.ENERGY: 10.0,
-            Sector.FINANCIALS: 10.0, Sector.CONSUMER: 10.0,
-            Sector.INDUSTRIALS: 60.0,
+            Sector.TECH: 28.0, Sector.ENERGY: 22.0,
+            Sector.FINANCIALS: 8.0, Sector.CONSUMER: 8.0,
+            Sector.CONSUMER_DISC: 14.0, Sector.INDUSTRIALS: 15.0,
+            Sector.HEALTHCARE: 5.0,
         })
         game = _make_game_state(recession_macro)
-        # Concentration fires first (>40%), so test with lower weight
-        alloc2 = Allocation(weights={
-            Sector.TECH: 30.0, Sector.ENERGY: 30.0,
-            Sector.FINANCIALS: 10.0, Sector.CONSUMER: 10.0,
-            Sector.INDUSTRIALS: 20.0,
-        })
-        result = self.agent.analyze(alloc2, recession_macro, game, random.Random(42))
+        result = self.agent.analyze(alloc, recession_macro, game, random.Random(42))
         assert result is not None
-        assert result.target_sector in {Sector.TECH, Sector.ENERGY, Sector.INDUSTRIALS}
+        assert result.target_sector in {
+            Sector.TECH, Sector.ENERGY, Sector.INDUSTRIALS, Sector.CONSUMER_DISC
+        }
 
     def test_rate_sensitivity_attack(self) -> None:
         """Tech overweight with rising rates triggers attack."""
@@ -94,9 +94,10 @@ class TestShortSellerAgent:
             week=3,
         )
         alloc = Allocation(weights={
-            Sector.TECH: 35.0, Sector.ENERGY: 20.0,
-            Sector.FINANCIALS: 15.0, Sector.CONSUMER: 15.0,
-            Sector.INDUSTRIALS: 15.0,
+            Sector.TECH: 35.0, Sector.ENERGY: 15.0,
+            Sector.FINANCIALS: 10.0, Sector.CONSUMER: 10.0,
+            Sector.CONSUMER_DISC: 10.0, Sector.INDUSTRIALS: 10.0,
+            Sector.HEALTHCARE: 10.0,
         })
         game = _make_game_state(rising_macro)
         result = self.agent.analyze(alloc, rising_macro, game, random.Random(42))
@@ -107,13 +108,15 @@ class TestShortSellerAgent:
         """Conviction is always 0-1."""
         for tech_pct in [45, 60, 80, 100]:
             remaining = 100 - tech_pct
-            per_other = remaining / 4
+            per_other = remaining / 6
             alloc = Allocation(weights={
                 Sector.TECH: float(tech_pct),
                 Sector.ENERGY: per_other,
                 Sector.FINANCIALS: per_other,
                 Sector.CONSUMER: per_other,
+                Sector.CONSUMER_DISC: per_other,
                 Sector.INDUSTRIALS: per_other,
+                Sector.HEALTHCARE: per_other,
             })
             game = _make_game_state(self.bull_macro)
             result = self.agent.analyze(alloc, self.bull_macro, game, random.Random(42))
@@ -123,9 +126,10 @@ class TestShortSellerAgent:
     def test_player_short_in_bull_attack(self) -> None:
         """Player shorting a sector in bull market triggers squeeze attack."""
         alloc = Allocation(weights={
-            Sector.TECH: 40.0, Sector.ENERGY: 30.0,
-            Sector.FINANCIALS: 20.0, Sector.CONSUMER: 30.0,
-            Sector.INDUSTRIALS: -20.0,
+            Sector.TECH: 30.0, Sector.ENERGY: 25.0,
+            Sector.FINANCIALS: 15.0, Sector.CONSUMER: 25.0,
+            Sector.CONSUMER_DISC: 5.0, Sector.INDUSTRIALS: -15.0,
+            Sector.HEALTHCARE: 15.0,
         })
         game = _make_game_state(self.bull_macro)
         result = self.agent.analyze(alloc, self.bull_macro, game, random.Random(42))
@@ -141,9 +145,10 @@ class TestShortSellerAgent:
             week=5,
         )
         alloc = Allocation(weights={
-            Sector.TECH: 30.0, Sector.ENERGY: 25.0,
-            Sector.FINANCIALS: 25.0, Sector.CONSUMER: 35.0,
-            Sector.INDUSTRIALS: -15.0,
+            Sector.TECH: 20.0, Sector.ENERGY: 15.0,
+            Sector.FINANCIALS: 20.0, Sector.CONSUMER: 25.0,
+            Sector.CONSUMER_DISC: 5.0, Sector.INDUSTRIALS: -10.0,
+            Sector.HEALTHCARE: 25.0,
         })
         game = _make_game_state(recession_macro)
         result = self.agent.analyze(alloc, recession_macro, game, random.Random(42))
@@ -154,9 +159,10 @@ class TestShortSellerAgent:
     def test_concentration_on_large_short(self) -> None:
         """A large short position (|weight| > 40%) triggers concentration attack."""
         alloc = Allocation(weights={
-            Sector.TECH: 80.0, Sector.ENERGY: 20.0,
-            Sector.FINANCIALS: 20.0, Sector.CONSUMER: 30.0,
-            Sector.INDUSTRIALS: -50.0,
+            Sector.TECH: 80.0, Sector.ENERGY: 15.0,
+            Sector.FINANCIALS: 15.0, Sector.CONSUMER: 20.0,
+            Sector.CONSUMER_DISC: 10.0, Sector.INDUSTRIALS: -50.0,
+            Sector.HEALTHCARE: 10.0,
         })
         game = _make_game_state(self.bull_macro)
         result = self.agent.analyze(alloc, self.bull_macro, game, random.Random(42))
@@ -167,9 +173,10 @@ class TestShortSellerAgent:
     def test_critique_not_empty(self) -> None:
         """Critique is non-empty when attack fires."""
         alloc = Allocation(weights={
-            Sector.TECH: 50.0, Sector.ENERGY: 12.5,
-            Sector.FINANCIALS: 12.5, Sector.CONSUMER: 12.5,
-            Sector.INDUSTRIALS: 12.5,
+            Sector.TECH: 50.0, Sector.ENERGY: 8.0,
+            Sector.FINANCIALS: 8.0, Sector.CONSUMER: 10.0,
+            Sector.CONSUMER_DISC: 8.0, Sector.INDUSTRIALS: 8.0,
+            Sector.HEALTHCARE: 8.0,
         })
         game = _make_game_state(self.bull_macro)
         result = self.agent.analyze(alloc, self.bull_macro, game, random.Random(42))

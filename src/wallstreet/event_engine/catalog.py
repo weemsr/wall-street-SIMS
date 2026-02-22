@@ -13,8 +13,9 @@ EVENT_CATALOG: list[ShockEventTemplate] = [
         ),
         sector_effects={
             Sector.ENERGY: 0.06, Sector.TECH: -0.02,
-            Sector.CONSUMER: -0.03, Sector.INDUSTRIALS: -0.04,
-            Sector.FINANCIALS: -0.01,
+            Sector.CONSUMER: -0.03, Sector.CONSUMER_DISC: -0.03,
+            Sector.INDUSTRIALS: -0.04, Sector.FINANCIALS: -0.01,
+            Sector.HEALTHCARE: -0.01,
         },
         vol_impact=0.3,
         regime_weights={
@@ -31,7 +32,8 @@ EVENT_CATALOG: list[ShockEventTemplate] = [
         sector_effects={
             Sector.TECH: -0.08, Sector.FINANCIALS: -0.02,
             Sector.ENERGY: 0.0, Sector.CONSUMER: -0.01,
-            Sector.INDUSTRIALS: -0.01,
+            Sector.CONSUMER_DISC: -0.02, Sector.INDUSTRIALS: -0.01,
+            Sector.HEALTHCARE: 0.01,
         },
         vol_impact=0.2,
         regime_weights={
@@ -48,7 +50,8 @@ EVENT_CATALOG: list[ShockEventTemplate] = [
         sector_effects={
             Sector.FINANCIALS: -0.10, Sector.TECH: -0.03,
             Sector.ENERGY: -0.02, Sector.CONSUMER: -0.03,
-            Sector.INDUSTRIALS: -0.02,
+            Sector.CONSUMER_DISC: -0.04, Sector.INDUSTRIALS: -0.02,
+            Sector.HEALTHCARE: 0.01,
         },
         vol_impact=0.5,
         regime_weights={
@@ -63,9 +66,10 @@ EVENT_CATALOG: list[ShockEventTemplate] = [
             "Retail stocks tumble."
         ),
         sector_effects={
-            Sector.CONSUMER: -0.07, Sector.TECH: -0.02,
-            Sector.FINANCIALS: -0.02, Sector.ENERGY: -0.01,
-            Sector.INDUSTRIALS: -0.02,
+            Sector.CONSUMER: -0.07, Sector.CONSUMER_DISC: -0.06,
+            Sector.TECH: -0.02, Sector.FINANCIALS: -0.02,
+            Sector.ENERGY: -0.01, Sector.INDUSTRIALS: -0.02,
+            Sector.HEALTHCARE: 0.00,
         },
         vol_impact=0.2,
         regime_weights={
@@ -81,8 +85,9 @@ EVENT_CATALOG: list[ShockEventTemplate] = [
         ),
         sector_effects={
             Sector.INDUSTRIALS: -0.06, Sector.CONSUMER: -0.04,
-            Sector.TECH: -0.03, Sector.ENERGY: 0.02,
-            Sector.FINANCIALS: -0.01,
+            Sector.CONSUMER_DISC: -0.04, Sector.TECH: -0.03,
+            Sector.ENERGY: 0.02, Sector.FINANCIALS: -0.01,
+            Sector.HEALTHCARE: -0.02,
         },
         vol_impact=0.2,
         regime_weights={
@@ -99,7 +104,8 @@ EVENT_CATALOG: list[ShockEventTemplate] = [
         sector_effects={
             Sector.TECH: -0.06, Sector.FINANCIALS: -0.02,
             Sector.ENERGY: 0.0, Sector.CONSUMER: 0.01,
-            Sector.INDUSTRIALS: 0.0,
+            Sector.CONSUMER_DISC: -0.01, Sector.INDUSTRIALS: 0.0,
+            Sector.HEALTHCARE: -0.02,
         },
         vol_impact=0.15,
         regime_weights={
@@ -116,7 +122,8 @@ EVENT_CATALOG: list[ShockEventTemplate] = [
         sector_effects={
             Sector.ENERGY: 0.04, Sector.INDUSTRIALS: -0.05,
             Sector.TECH: -0.03, Sector.CONSUMER: -0.03,
-            Sector.FINANCIALS: -0.03,
+            Sector.CONSUMER_DISC: -0.03, Sector.FINANCIALS: -0.03,
+            Sector.HEALTHCARE: 0.02,
         },
         vol_impact=0.4,
         regime_weights={
@@ -132,8 +139,9 @@ EVENT_CATALOG: list[ShockEventTemplate] = [
         ),
         sector_effects={
             Sector.FINANCIALS: -0.04, Sector.TECH: -0.05,
-            Sector.CONSUMER: -0.03, Sector.ENERGY: 0.03,
-            Sector.INDUSTRIALS: -0.02,
+            Sector.CONSUMER: -0.03, Sector.CONSUMER_DISC: -0.04,
+            Sector.ENERGY: 0.03, Sector.INDUSTRIALS: -0.02,
+            Sector.HEALTHCARE: -0.01,
         },
         vol_impact=0.3,
         regime_weights={
@@ -148,9 +156,10 @@ EVENT_CATALOG: list[ShockEventTemplate] = [
             "Imported goods costs soar."
         ),
         sector_effects={
-            Sector.CONSUMER: -0.05, Sector.TECH: -0.02,
-            Sector.FINANCIALS: -0.04, Sector.ENERGY: 0.03,
-            Sector.INDUSTRIALS: -0.03,
+            Sector.CONSUMER: -0.05, Sector.CONSUMER_DISC: -0.04,
+            Sector.TECH: -0.02, Sector.FINANCIALS: -0.04,
+            Sector.ENERGY: 0.03, Sector.INDUSTRIALS: -0.03,
+            Sector.HEALTHCARE: -0.01,
         },
         vol_impact=0.35,
         regime_weights={
@@ -167,7 +176,8 @@ EVENT_CATALOG: list[ShockEventTemplate] = [
         sector_effects={
             Sector.TECH: -0.05, Sector.FINANCIALS: -0.06,
             Sector.ENERGY: -0.01, Sector.CONSUMER: -0.02,
-            Sector.INDUSTRIALS: -0.01,
+            Sector.CONSUMER_DISC: -0.02, Sector.INDUSTRIALS: -0.01,
+            Sector.HEALTHCARE: -0.01,
         },
         vol_impact=0.4,
         regime_weights={
@@ -185,7 +195,8 @@ EVENT_CATALOG: list[ShockEventTemplate] = [
         sector_effects={
             Sector.TECH: 0.08, Sector.FINANCIALS: 0.02,
             Sector.ENERGY: 0.0, Sector.CONSUMER: 0.01,
-            Sector.INDUSTRIALS: 0.02,
+            Sector.CONSUMER_DISC: 0.03, Sector.INDUSTRIALS: 0.02,
+            Sector.HEALTHCARE: 0.01,
         },
         vol_impact=0.1,
         regime_weights={
@@ -201,8 +212,9 @@ EVENT_CATALOG: list[ShockEventTemplate] = [
         ),
         sector_effects={
             Sector.INDUSTRIALS: 0.06, Sector.CONSUMER: 0.04,
-            Sector.FINANCIALS: 0.03, Sector.TECH: 0.02,
-            Sector.ENERGY: 0.03,
+            Sector.CONSUMER_DISC: 0.05, Sector.FINANCIALS: 0.03,
+            Sector.TECH: 0.02, Sector.ENERGY: 0.03,
+            Sector.HEALTHCARE: 0.02,
         },
         vol_impact=-0.1,
         regime_weights={
@@ -219,7 +231,8 @@ EVENT_CATALOG: list[ShockEventTemplate] = [
         sector_effects={
             Sector.ENERGY: 0.09, Sector.INDUSTRIALS: 0.03,
             Sector.TECH: 0.0, Sector.CONSUMER: 0.01,
-            Sector.FINANCIALS: 0.01,
+            Sector.CONSUMER_DISC: 0.01, Sector.FINANCIALS: 0.01,
+            Sector.HEALTHCARE: 0.00,
         },
         vol_impact=0.1,
         regime_weights={
@@ -235,8 +248,9 @@ EVENT_CATALOG: list[ShockEventTemplate] = [
         ),
         sector_effects={
             Sector.TECH: 0.05, Sector.CONSUMER: 0.04,
-            Sector.FINANCIALS: -0.02, Sector.INDUSTRIALS: 0.03,
-            Sector.ENERGY: 0.01,
+            Sector.CONSUMER_DISC: 0.04, Sector.FINANCIALS: -0.02,
+            Sector.INDUSTRIALS: 0.03, Sector.ENERGY: 0.01,
+            Sector.HEALTHCARE: 0.01,
         },
         vol_impact=-0.2,
         regime_weights={
@@ -253,7 +267,8 @@ EVENT_CATALOG: list[ShockEventTemplate] = [
         sector_effects={
             Sector.FINANCIALS: 0.06, Sector.TECH: 0.02,
             Sector.INDUSTRIALS: 0.02, Sector.CONSUMER: 0.01,
-            Sector.ENERGY: 0.01,
+            Sector.CONSUMER_DISC: 0.02, Sector.ENERGY: 0.01,
+            Sector.HEALTHCARE: 0.02,
         },
         vol_impact=0.1,
         regime_weights={
@@ -268,9 +283,10 @@ EVENT_CATALOG: list[ShockEventTemplate] = [
             "Consumer discretionary stocks lead the market higher."
         ),
         sector_effects={
-            Sector.CONSUMER: 0.07, Sector.TECH: 0.02,
-            Sector.FINANCIALS: 0.02, Sector.INDUSTRIALS: 0.01,
-            Sector.ENERGY: 0.01,
+            Sector.CONSUMER: 0.07, Sector.CONSUMER_DISC: 0.06,
+            Sector.TECH: 0.02, Sector.FINANCIALS: 0.02,
+            Sector.INDUSTRIALS: 0.01, Sector.ENERGY: 0.01,
+            Sector.HEALTHCARE: 0.01,
         },
         vol_impact=-0.1,
         regime_weights={
@@ -288,7 +304,8 @@ EVENT_CATALOG: list[ShockEventTemplate] = [
         sector_effects={
             Sector.TECH: -0.04, Sector.ENERGY: 0.03,
             Sector.FINANCIALS: 0.02, Sector.CONSUMER: 0.01,
-            Sector.INDUSTRIALS: 0.03,
+            Sector.CONSUMER_DISC: -0.03, Sector.INDUSTRIALS: 0.03,
+            Sector.HEALTHCARE: 0.02,
         },
         vol_impact=0.1,
         regime_weights={
@@ -305,7 +322,8 @@ EVENT_CATALOG: list[ShockEventTemplate] = [
         sector_effects={
             Sector.ENERGY: -0.05, Sector.TECH: 0.03,
             Sector.INDUSTRIALS: 0.04, Sector.CONSUMER: 0.01,
-            Sector.FINANCIALS: 0.0,
+            Sector.CONSUMER_DISC: 0.01, Sector.FINANCIALS: 0.0,
+            Sector.HEALTHCARE: 0.01,
         },
         vol_impact=0.1,
         regime_weights={
@@ -322,7 +340,8 @@ EVENT_CATALOG: list[ShockEventTemplate] = [
         sector_effects={
             Sector.TECH: -0.04, Sector.ENERGY: -0.03,
             Sector.FINANCIALS: -0.05, Sector.CONSUMER: -0.02,
-            Sector.INDUSTRIALS: -0.03,
+            Sector.CONSUMER_DISC: -0.03, Sector.INDUSTRIALS: -0.03,
+            Sector.HEALTHCARE: -0.01,
         },
         vol_impact=0.6,
         regime_weights={
@@ -339,7 +358,8 @@ EVENT_CATALOG: list[ShockEventTemplate] = [
         sector_effects={
             Sector.INDUSTRIALS: 0.05, Sector.TECH: 0.03,
             Sector.ENERGY: 0.02, Sector.CONSUMER: 0.03,
-            Sector.FINANCIALS: 0.02,
+            Sector.CONSUMER_DISC: 0.03, Sector.FINANCIALS: 0.02,
+            Sector.HEALTHCARE: 0.01,
         },
         vol_impact=-0.15,
         regime_weights={

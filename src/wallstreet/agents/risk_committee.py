@@ -61,7 +61,7 @@ class RulesBasedRiskCommittee(RiskAgent):
 
         # Rule 2: Regime alignment (only long cyclical exposure counts)
         long_cyclical = sum(
-            max(0.0, fracs.get(s, 0)) for s in (Sector.TECH, Sector.INDUSTRIALS, Sector.ENERGY)
+            max(0.0, fracs.get(s, 0)) for s in (Sector.TECH, Sector.INDUSTRIALS, Sector.ENERGY, Sector.CONSUMER_DISC)
         )
         if macro_state.regime == Regime.RECESSION and long_cyclical > 0.60:
             risk_score += 2

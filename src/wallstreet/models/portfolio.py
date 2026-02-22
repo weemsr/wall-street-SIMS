@@ -37,7 +37,7 @@ class Allocation(BaseModel):
                 f"Gross exposure {gross:.1f}% exceeds {MAX_GROSS_EXPOSURE:.0f}% limit"
             )
         if set(self.weights.keys()) != set(Sector):
-            raise ValueError("Allocation must include all 5 sectors")
+            raise ValueError("Allocation must include all 7 sectors")
         return self
 
     @property

@@ -57,21 +57,25 @@ def sample_week_result() -> WeekResult:
         rate_direction=RateDirection.STABLE,
         week=1,
     )
-    alloc = Allocation(weights={s: 20.0 for s in Sector})
+    alloc = Allocation(weights={s: 100.0 / len(Sector) for s in Sector})
     returns = SectorReturns(returns={s: 0.01 for s in Sector})
     event = ShockEvent(
         template_name="Test Event",
         description="A test event occurred.",
-        sector_effects={Sector.TECH: 0.02, Sector.ENERGY: -0.01,
-                        Sector.FINANCIALS: 0.0, Sector.CONSUMER: 0.0,
-                        Sector.INDUSTRIALS: 0.0},
+        sector_effects={
+            Sector.TECH: 0.02, Sector.ENERGY: -0.01,
+            Sector.FINANCIALS: 0.0, Sector.CONSUMER: 0.0,
+            Sector.CONSUMER_DISC: 0.0, Sector.INDUSTRIALS: 0.0,
+            Sector.HEALTHCARE: 0.0,
+        },
         vol_impact=0.1,
         week=1,
     )
     adjusted = SectorReturns(returns={
         Sector.TECH: 0.03, Sector.ENERGY: 0.00,
         Sector.FINANCIALS: 0.01, Sector.CONSUMER: 0.01,
-        Sector.INDUSTRIALS: 0.01,
+        Sector.CONSUMER_DISC: 0.01, Sector.INDUSTRIALS: 0.01,
+        Sector.HEALTHCARE: 0.01,
     })
     return WeekResult(
         week=1,
