@@ -157,7 +157,7 @@ class RivalPM:
         elif self.strategy_type == VALUE:
             weights = self._value_decide(game_state, rng)
         else:
-            weights = {s: 20.0 for s in Sector}
+            weights = {s: 100.0 / len(Sector) for s in Sector}
 
         return Allocation(weights=weights)
 

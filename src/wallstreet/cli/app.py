@@ -273,5 +273,5 @@ def run_game(
 
 
 def _equal_allocation() -> Allocation:
-    """Return a balanced 20% each allocation for narrative pre-generation."""
-    return Allocation(weights={s: 20.0 for s in Sector})
+    """Return a balanced equal-weight allocation for narrative pre-generation."""
+    return Allocation(weights={s: 100.0 / len(Sector) for s in Sector})
