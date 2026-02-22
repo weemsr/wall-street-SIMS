@@ -98,36 +98,54 @@ def prompt_allocation(
                     _print("[red]  Invalid number. Try again.[/red]")
                     continue
 
-            # Show running total after entry
-            running_sum = sum(values[: i + 1])
-            rem_after = 100.0 - running_sum
-            if running_sum <= 100:
-                color = "green"
-            elif running_sum <= 200:
-                color = "yellow"
+            # Show portfolio breakdown after entry
+            entered = values[: i + 1]
+            longs = sum(v for v in entered if v > 0)
+            shorts = sum(abs(v) for v in entered if v < 0)
+            net = sum(entered)
+            cash = 100.0 - net
+            has_shorts = any(v < 0 for v in entered)
+
+            status_parts: list[str] = [f"[green]Longs: {longs:g}%[/green]"]
+            if has_shorts:
+                status_parts.append(f"[red]Shorts: {shorts:g}%[/red]")
+            if cash >= 0:
+                status_parts.append(f"[dim]Cash: {cash:g}%[/dim]")
             else:
-                color = "red"
-            _print(
-                f"[{color}]         Total: {running_sum:g}%[/{color}]"
-                f"  [dim]Remaining: {rem_after:g}%[/dim]"
-            )
+                status_parts.append(f"[red]Cash: {cash:g}%[/red]")
+            if has_shorts:
+                gross = longs + shorts
+                status_parts.append(f"[dim]Gross: {gross:g}%/200%[/dim]")
+
+            _print(f"         {'  '.join(status_parts)}")
 
             i += 1
 
         # Show summary
-        total = sum(values)
-        cash = max(0.0, 100.0 - total)
+        longs_total = sum(v for v in values if v > 0)
+        shorts_total = sum(abs(v) for v in values if v < 0)
+        net_total = sum(values)
+        cash_total = 100.0 - net_total
+        any_shorts = any(v < 0 for v in values)
+
         _print()
         _print("[bold]Allocation Summary:[/bold]")
-        parts = []
+        summary_parts = []
         for idx, sector in enumerate(SECTOR_ORDER):
-            parts.append(f"{SHORT_NAMES[sector]}: {values[idx]:g}%")
-        _print(f"  {' | '.join(parts)}")
-        total_color = "green" if total <= 100 else "yellow"
-        _print(
-            f"  [{total_color}]Total invested: {total:g}%[/{total_color}]"
-            f"  [dim]Cash: {cash:g}%[/dim]"
-        )
+            summary_parts.append(f"{SHORT_NAMES[sector]}: {values[idx]:g}%")
+        _print(f"  {' | '.join(summary_parts)}")
+
+        breakdown = [f"[green]Longs: {longs_total:g}%[/green]"]
+        if any_shorts:
+            breakdown.append(f"[red]Shorts: {shorts_total:g}%[/red]")
+        if cash_total >= 0:
+            breakdown.append(f"Cash: {cash_total:g}%")
+        else:
+            breakdown.append(f"[red]Cash: {cash_total:g}%[/red]")
+        if any_shorts:
+            gross_total = longs_total + shorts_total
+            breakdown.append(f"Gross: {gross_total:g}%/200%")
+        _print(f"  {'  '.join(breakdown)}")
 
         # Try to create and validate the allocation
         weights = dict(zip(SECTOR_ORDER, values))
