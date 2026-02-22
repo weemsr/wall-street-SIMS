@@ -30,12 +30,14 @@
       <input type="text" id="name" value="Player" maxlength="20" />
       <label for="weeks">Season Length</label>
       <select id="weeks">
-        <option value="3">3 months (Quick Play)</option>
-        <option value="5">5 months</option>
-        <option value="10">10 months</option>
-        <option value="13">13 months</option>
-        <option value="26" selected>26 months (Full Season)</option>
+        <option value="3">1 quarter (Quick Play)</option>
+        <option value="6">2 quarters</option>
+        <option value="9">3 quarters</option>
+        <option value="12">4 quarters (1 year)</option>
+        <option value="24" selected>8 quarters (Full Season)</option>
       </select>
+      <label for="capital">Starting Capital</label>
+      <input type="text" id="capital" value="1,000,000" />
       <label for="seed">Seed (blank = random)</label>
       <input type="text" id="seed" placeholder="random" />
       <button id="start-btn">START GAME</button>
@@ -50,6 +52,8 @@
       try {
         var name = document.getElementById('name').value.trim() || 'Player';
         var weeks = document.getElementById('weeks').value;
+        var capitalRaw = document.getElementById('capital').value.replace(/,/g, '').trim();
+        var capital = parseInt(capitalRaw, 10) || 1000000;
         var seedInput = document.getElementById('seed').value.trim();
         var seed = seedInput ? parseInt(seedInput, 10) : Math.floor(Math.random() * 4294967296);
 
@@ -84,7 +88,7 @@
 
         // Connect WebSocket
         var proto = location.protocol === 'https:' ? 'wss' : 'ws';
-        var wsUrl = proto + '://' + location.host + '/ws/play?name=' + encodeURIComponent(name) + '&weeks=' + weeks + '&seed=' + seed;
+        var wsUrl = proto + '://' + location.host + '/ws/play?name=' + encodeURIComponent(name) + '&weeks=' + weeks + '&seed=' + seed + '&capital=' + capital;
         term.write('URL: ' + wsUrl + '\r\n');
 
         var ws = new WebSocket(wsUrl);

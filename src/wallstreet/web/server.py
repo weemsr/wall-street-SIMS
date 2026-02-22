@@ -101,11 +101,12 @@ async def play_game_ws(ws: WebSocket) -> None:
     seed = int(params.get("seed", "0"))
     name = params.get("name", "Player")
     weeks = int(params.get("weeks", "3"))
+    capital = float(params.get("capital", "1000000"))
 
     loop = asyncio.get_event_loop()
     bridge = WebSocketBridge(ws, loop)
 
-    config = GameConfig(seed=seed, player_name=name, total_weeks=weeks)
+    config = GameConfig(seed=seed, player_name=name, total_weeks=weeks, starting_cash=capital)
 
     async def receive_loop() -> None:
         """Receive messages from browser and feed them to the game thread."""
