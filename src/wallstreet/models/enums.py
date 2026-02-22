@@ -8,7 +8,7 @@ class Sector(str, Enum):
     TECH = "Tech"
     ENERGY = "Energy"
     FINANCIALS = "Financials"
-    CONSUMER = "Consumer"
+    CONSUMER = "Consumer Staples"
     INDUSTRIALS = "Industrials"
 
 

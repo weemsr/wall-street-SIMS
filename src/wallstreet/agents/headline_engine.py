@@ -99,12 +99,12 @@ _EVENT_HEADLINES: dict[str, list[tuple[str, str, dict[str, str]]]] = {
         (
             "Crude Surges on OPEC Cuts — Energy Stocks Whipsaw",
             "mixed",
-            {"Energy": "volatile", "Consumer": "negative"},
+            {"Energy": "volatile", "Consumer Staples": "negative"},
         ),
         (
             "Oil Prices Spike: Energy Sector Rallies as Consumers Feel the Pinch",
             "mixed",
-            {"Energy": "positive", "Consumer": "negative"},
+            {"Energy": "positive", "Consumer Staples": "negative"},
         ),
     ],
     "Tech Earnings Miss": [
@@ -123,7 +123,7 @@ _EVENT_HEADLINES: dict[str, list[tuple[str, str, dict[str, str]]]] = {
         (
             "New Virus Variant Sparks Global Health Concerns and Market Jitters",
             "bearish",
-            {"Consumer": "negative", "Energy": "negative"},
+            {"Consumer Staples": "negative", "Energy": "negative"},
         ),
     ],
     "Surprise Rate Cut": [
@@ -158,7 +158,7 @@ _EVENT_HEADLINES: dict[str, list[tuple[str, str, dict[str, str]]]] = {
         (
             "Consumer Confidence Hits Multi-Year High, Boosting Retail Sector",
             "bullish",
-            {"Consumer": "positive"},
+            {"Consumer Staples": "positive"},
         ),
     ],
     "Crypto Crash": [
@@ -172,7 +172,7 @@ _EVENT_HEADLINES: dict[str, list[tuple[str, str, dict[str, str]]]] = {
         (
             "Global Supply Chain Disruptions Worsen, Squeezing Manufacturers",
             "bearish",
-            {"Industrials": "negative", "Consumer": "negative"},
+            {"Industrials": "negative", "Consumer Staples": "negative"},
         ),
     ],
     "Geopolitical Crisis": [
@@ -228,7 +228,7 @@ _EVENT_HEADLINES: dict[str, list[tuple[str, str, dict[str, str]]]] = {
         (
             "Housing Prices in Sharp Decline as Mortgage Defaults Rise",
             "bearish",
-            {"Financials": "negative", "Consumer": "negative"},
+            {"Financials": "negative", "Consumer Staples": "negative"},
         ),
     ],
     "Central Bank Surprise": [
