@@ -106,7 +106,11 @@ def prompt_allocation(
             cash = 100.0 - net
             has_shorts = any(v < 0 for v in entered)
 
-            status_parts: list[str] = [f"[green]Longs: {longs:g}%[/green]"]
+            net_color = "green" if 0 <= net <= 100 else "red"
+            status_parts: list[str] = [
+                f"[{net_color}]Net: {net:g}%/100%[/{net_color}]",
+                f"[green]Longs: {longs:g}%[/green]",
+            ]
             if has_shorts:
                 status_parts.append(f"[red]Shorts: {shorts:g}%[/red]")
             if cash >= 0:
@@ -135,7 +139,11 @@ def prompt_allocation(
             summary_parts.append(f"{SHORT_NAMES[sector]}: {values[idx]:g}%")
         _print(f"  {' | '.join(summary_parts)}")
 
-        breakdown = [f"[green]Longs: {longs_total:g}%[/green]"]
+        net_color = "green" if 0 <= net_total <= 100 else "red"
+        breakdown = [
+            f"[{net_color}]Net: {net_total:g}%/100%[/{net_color}]",
+            f"[green]Longs: {longs_total:g}%[/green]",
+        ]
         if any_shorts:
             breakdown.append(f"[red]Shorts: {shorts_total:g}%[/red]")
         if cash_total >= 0:
