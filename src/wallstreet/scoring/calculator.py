@@ -8,11 +8,11 @@ from wallstreet.models.scoring import ScoreCard
 def compute_cagr(initial: float, final: float, weeks: int) -> float:
     """Compute annualized return (CAGR).
 
-    Annualizes using 52 weeks/year: (final/initial)^(52/weeks) - 1
+    Annualizes using 12 months/year: (final/initial)^(12/periods) - 1
     """
     if initial <= 0 or final <= 0 or weeks <= 0:
         return -1.0
-    years_fraction = weeks / 52.0
+    years_fraction = weeks / 12.0
     return (final / initial) ** (1.0 / years_fraction) - 1.0
 
 
@@ -36,9 +36,9 @@ def compute_max_drawdown(weekly_values: list[float]) -> float:
 
 
 def compute_annualized_volatility(weekly_returns: list[float]) -> float:
-    """Annualized volatility from weekly returns.
+    """Annualized volatility from monthly returns.
 
-    ann_vol = weekly_std * sqrt(52)
+    ann_vol = monthly_std * sqrt(12)
     Uses sample standard deviation (n-1 denominator).
     """
     if len(weekly_returns) < 2:
@@ -47,7 +47,7 @@ def compute_annualized_volatility(weekly_returns: list[float]) -> float:
     mean = sum(weekly_returns) / n
     variance = sum((r - mean) ** 2 for r in weekly_returns) / (n - 1)
     weekly_std = math.sqrt(variance)
-    return weekly_std * math.sqrt(52)
+    return weekly_std * math.sqrt(12)
 
 
 def compute_sharpe_ratio(
@@ -55,7 +55,7 @@ def compute_sharpe_ratio(
 ) -> float:
     """Sharpe ratio (annualized return / annualized vol).
 
-    Uses simple annualization: mean_weekly * 52 for return.
+    Uses simple annualization: mean_monthly * 12 for return.
     """
     if len(weekly_returns) < 2:
         return 0.0
@@ -63,7 +63,7 @@ def compute_sharpe_ratio(
     if ann_vol < 1e-10:
         return 0.0
     mean_weekly = sum(weekly_returns) / len(weekly_returns)
-    ann_return = mean_weekly * 52
+    ann_return = mean_weekly * 12
     return (ann_return - risk_free_rate) / ann_vol
 
 

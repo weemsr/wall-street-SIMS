@@ -120,6 +120,50 @@ class TestShortSellerAgent:
             if result:
                 assert 0.0 <= result.conviction <= 1.0
 
+    def test_player_short_in_bull_attack(self) -> None:
+        """Player shorting a sector in bull market triggers squeeze attack."""
+        alloc = Allocation(weights={
+            Sector.TECH: 40.0, Sector.ENERGY: 30.0,
+            Sector.FINANCIALS: 20.0, Sector.CONSUMER: 30.0,
+            Sector.INDUSTRIALS: -20.0,
+        })
+        game = _make_game_state(self.bull_macro)
+        result = self.agent.analyze(alloc, self.bull_macro, game, random.Random(42))
+        assert result is not None
+        assert result.target_sector == Sector.INDUSTRIALS
+
+    def test_no_squeeze_attack_in_recession(self) -> None:
+        """Player shorts in recession should NOT trigger squeeze attack."""
+        recession_macro = MacroState(
+            regime=Regime.RECESSION,
+            volatility_state=VolatilityState.HIGH,
+            rate_direction=RateDirection.FALLING,
+            week=5,
+        )
+        alloc = Allocation(weights={
+            Sector.TECH: 30.0, Sector.ENERGY: 25.0,
+            Sector.FINANCIALS: 25.0, Sector.CONSUMER: 35.0,
+            Sector.INDUSTRIALS: -15.0,
+        })
+        game = _make_game_state(recession_macro)
+        result = self.agent.analyze(alloc, recession_macro, game, random.Random(42))
+        # Should not be a squeeze attack (may be None or different attack type)
+        if result is not None:
+            assert "squeeze" not in result.critique.lower()
+
+    def test_concentration_on_large_short(self) -> None:
+        """A large short position (|weight| > 40%) triggers concentration attack."""
+        alloc = Allocation(weights={
+            Sector.TECH: 80.0, Sector.ENERGY: 20.0,
+            Sector.FINANCIALS: 20.0, Sector.CONSUMER: 30.0,
+            Sector.INDUSTRIALS: -50.0,
+        })
+        game = _make_game_state(self.bull_macro)
+        result = self.agent.analyze(alloc, self.bull_macro, game, random.Random(42))
+        assert result is not None
+        # Should trigger concentration on either TECH (80%) or INDUSTRIALS (|-50|=50%)
+        assert result.conviction >= 0.60
+
     def test_critique_not_empty(self) -> None:
         """Critique is non-empty when attack fires."""
         alloc = Allocation(weights={

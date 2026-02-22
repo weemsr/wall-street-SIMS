@@ -188,14 +188,15 @@ def run_game(
                 fracs[s] * adjusted[s] for s in Sector
             )
 
-            # Update portfolio
+            # Update portfolio (floor at 0 — leverage wipeout)
             value_before = game_state.portfolio.total_value
-            new_value = value_before * (1 + portfolio_return)
+            new_value = max(0.0, value_before * (1 + portfolio_return))
+            new_cash = new_value * allocation.cash_weight
             new_holdings = Holdings(
                 positions={s: new_value * fracs[s] for s in Sector}
             )
             game_state.portfolio = PortfolioState(
-                cash=0.0,
+                cash=new_cash,
                 holdings=new_holdings,
                 total_value=new_value,
                 week=week,

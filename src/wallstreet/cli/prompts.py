@@ -27,15 +27,18 @@ def prompt_allocation(
     Accepts space-separated values in sector order:
       Tech Energy Financials Consumer Industrials
 
-    Validates sum == 100 and all non-negative. Retries on error.
+    Validates sum 0-100%. Remainder held as cash (earns 0%). Retries on error.
     """
     _input = input_fn or console.input
     _print = print_fn or console.print
 
     sector_names = " ".join(s.value for s in SECTOR_ORDER)
-    _print(f"[bold]Enter allocation (% for each sector, must sum to 100):[/bold]")
+    _print(f"[bold]Enter allocation (% for each sector, 0-100% total):[/bold]")
     _print(f"[dim]  Order: {sector_names}[/dim]")
-    _print(f"[dim]  Example: 20 20 20 20 20[/dim]")
+    _print(f"[dim]  Example: 20 20 20 20 20  (fully invested)[/dim]")
+    _print(f"[dim]          10 10 10 10 10  (50% invested, 50% cash)[/dim]")
+    _print(f"[dim]  Negative = short (e.g. 40 30 20 30 -20). Max short: -50% per sector.[/dim]")
+    _print(f"[dim]  Gross exposure (sum of |weights|) capped at 200%.[/dim]")
 
     while True:
         try:

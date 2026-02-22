@@ -1,6 +1,6 @@
 # Wall Street War Room
 
-A single-player portfolio-management roguelike game. Manage a $1M portfolio across 5 sectors over a 26-week season, reacting to macro regime shifts and shock events.
+A single-player portfolio-management roguelike game. Manage a $1M portfolio across 5 sectors over a 26-month season, reacting to macro regime shifts and shock events.
 
 ## Quick Start
 
@@ -12,10 +12,10 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install ".[dev]"
 
-# Play a full 26-week season
+# Play a full 26-month season
 python -m wallstreet
 
-# Quick 3-week test game with a fixed seed
+# Quick 3-month test game with a fixed seed
 python -m wallstreet --weeks 3 --seed 42
 
 # Play with a custom name
@@ -27,15 +27,15 @@ python -m wallstreet --list-games
 
 ## How to Play
 
-Each week you:
+Each month you:
 1. See the current macro environment (regime, rates, volatility)
 2. See any shock events that occurred
 3. Review your portfolio status
-4. Choose your allocation across 5 sectors (must sum to 100%)
+4. Choose your allocation across 5 sectors (0-100%, remainder is cash)
 5. Receive a Risk Committee assessment
-6. See your weekly results
+6. See your monthly results
 
-After 26 weeks, you receive a final scorecard with:
+After 26 months, you receive a final scorecard with:
 - **CAGR** (annualized return)
 - **Max Drawdown** (worst peak-to-trough decline)
 - **Annualized Volatility**

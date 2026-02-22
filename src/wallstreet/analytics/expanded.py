@@ -26,7 +26,7 @@ def compute_rolling_volatility(
         mean = sum(segment) / len(segment)
         variance = sum((r - mean) ** 2 for r in segment) / (len(segment) - 1)
         weekly_vol = math.sqrt(variance)
-        annualized = weekly_vol * math.sqrt(52)
+        annualized = weekly_vol * math.sqrt(12)
         result.append(round(annualized, 6))
     return result
 
@@ -55,7 +55,7 @@ def compute_rolling_sharpe(
             result.append(0.0)
             continue
         weekly_sharpe = (mean - risk_free) / weekly_vol
-        annualized = weekly_sharpe * math.sqrt(52)
+        annualized = weekly_sharpe * math.sqrt(12)
         result.append(round(annualized, 6))
     return result
 
@@ -84,12 +84,15 @@ def compute_drawdown_series(weekly_values: list[float]) -> list[float]:
 def compute_concentration_score(allocation: Allocation) -> float:
     """Compute the Herfindahl-Hirschman Index for portfolio concentration.
 
-    HHI = sum of squared weights (as fractions).
-    Min = 0.20 (perfectly equal across 5 sectors)
-    Max = 1.00 (100% in one sector)
+    Uses absolute values normalized by gross exposure so HHI stays
+    in the 0.20–1.0 range regardless of short positions.
     """
     fractions = allocation.as_fractions
-    hhi = sum(f ** 2 for f in fractions.values())
+    gross = sum(abs(f) for f in fractions.values())
+    if gross < 1e-10:
+        return 0.0
+    normalized = {s: abs(f) / gross for s, f in fractions.items()}
+    hhi = sum(f ** 2 for f in normalized.values())
     return round(hhi, 6)
 
 
@@ -105,14 +108,17 @@ def compute_expanded_metrics(
     concentration_scores = [
         compute_concentration_score(alloc) for alloc in weekly_allocations
     ]
+    gross_exposure_series = [alloc.gross_exposure for alloc in weekly_allocations]
 
     return ExpandedMetrics(
         rolling_volatility=rolling_vol,
         rolling_sharpe=rolling_sharpe,
         drawdown_series=drawdown_series,
         concentration_scores=concentration_scores,
+        gross_exposure_series=gross_exposure_series,
         current_rolling_vol=rolling_vol[-1] if rolling_vol else 0.0,
         current_rolling_sharpe=rolling_sharpe[-1] if rolling_sharpe else 0.0,
         current_drawdown=drawdown_series[-1] if drawdown_series else 0.0,
         current_concentration=concentration_scores[-1] if concentration_scores else 0.0,
+        current_gross_exposure=gross_exposure_series[-1] if gross_exposure_series else 1.0,
     )

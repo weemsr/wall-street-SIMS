@@ -1,2 +1,7 @@
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
 [deploy]
-startCommand = "python main.py"
+healthcheckPath = "/"
+healthcheckTimeout = 30

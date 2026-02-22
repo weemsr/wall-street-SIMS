@@ -127,6 +127,28 @@ class TestConcentrationScore:
         assert abs(hhi - 0.3125) < 0.001
 
 
+    def test_short_position_concentration(self) -> None:
+        """HHI normalized by gross exposure for portfolios with shorts."""
+        alloc = Allocation(weights={
+            Sector.TECH: 40.0, Sector.ENERGY: 30.0,
+            Sector.FINANCIALS: 20.0, Sector.CONSUMER: 30.0,
+            Sector.INDUSTRIALS: -20.0,
+        })
+        hhi = compute_concentration_score(alloc)
+        # gross = 1.4, normalized weights: 40/140, 30/140, 20/140, 30/140, 20/140
+        assert 0.20 <= hhi <= 0.25
+
+    def test_equal_long_short_concentration(self) -> None:
+        """Balanced long/short portfolio HHI stays in expected range."""
+        alloc = Allocation(weights={
+            Sector.TECH: 40.0, Sector.ENERGY: 40.0,
+            Sector.FINANCIALS: 20.0, Sector.CONSUMER: 20.0,
+            Sector.INDUSTRIALS: -20.0,
+        })
+        hhi = compute_concentration_score(alloc)
+        assert 0.20 <= hhi <= 0.25
+
+
 class TestExpandedMetrics:
     def test_integration(self) -> None:
         """Full metrics computation produces valid output."""
@@ -142,4 +164,22 @@ class TestExpandedMetrics:
         assert len(metrics.rolling_sharpe) == len(returns)
         assert len(metrics.drawdown_series) == len(values)
         assert len(metrics.concentration_scores) == len(allocs)
+        assert len(metrics.gross_exposure_series) == len(allocs)
         assert metrics.current_concentration == 0.2  # equal weight
+        assert metrics.current_gross_exposure == pytest.approx(1.0)
+
+    def test_integration_with_shorts(self) -> None:
+        """Expanded metrics with short positions."""
+        values = [1_000_000, 1_010_000, 980_000]
+        returns = [0.01, -0.0297]
+        allocs = [
+            Allocation(weights={
+                Sector.TECH: 40.0, Sector.ENERGY: 30.0,
+                Sector.FINANCIALS: 20.0, Sector.CONSUMER: 30.0,
+                Sector.INDUSTRIALS: -20.0,
+            })
+            for _ in returns
+        ]
+        metrics = compute_expanded_metrics(values, returns, allocs)
+        assert metrics.current_gross_exposure == pytest.approx(1.40)
+        assert 0.20 <= metrics.current_concentration <= 0.25

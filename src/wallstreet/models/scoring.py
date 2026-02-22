@@ -17,14 +17,14 @@ class ScoreCard(BaseModel):
 
     @property
     def letter_grade(self) -> str:
-        """A-F grade based on Sharpe ratio."""
-        if self.sharpe_ratio >= 2.0:
+        """A-F grade based on Sharpe ratio (annualized from monthly data)."""
+        if self.sharpe_ratio >= 3.0:
             return "A+"
-        elif self.sharpe_ratio >= 1.5:
+        elif self.sharpe_ratio >= 2.0:
             return "A"
-        elif self.sharpe_ratio >= 1.0:
+        elif self.sharpe_ratio >= 1.5:
             return "B"
-        elif self.sharpe_ratio >= 0.5:
+        elif self.sharpe_ratio >= 0.8:
             return "C"
         elif self.sharpe_ratio >= 0.0:
             return "D"

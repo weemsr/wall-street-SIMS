@@ -4,85 +4,24 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Wall Street War Room</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css" />
+  <link rel="stylesheet" href="/static/xterm.css" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      background: #0a0a0a;
-      color: #e0e0e0;
-      font-family: 'Courier New', monospace;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    /* ── Setup modal ─────────────────────────────────── */
-    #setup {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
+    html, body { background: #0a0a0a; color: #e0e0e0; font-family: 'Courier New', monospace; height: 100%; width: 100%; }
+    #setup { display: flex; align-items: center; justify-content: center; height: 100%; }
     #setup.hidden { display: none; }
-    .setup-box {
-      background: #1a1a2e;
-      border: 1px solid #16213e;
-      border-radius: 8px;
-      padding: 2rem 2.5rem;
-      width: 360px;
-    }
-    .setup-box h1 {
-      font-size: 1.4rem;
-      color: #00ff88;
-      margin-bottom: 0.3rem;
-    }
-    .setup-box p.sub {
-      font-size: 0.8rem;
-      color: #888;
-      margin-bottom: 1.5rem;
-    }
-    .setup-box label {
-      display: block;
-      font-size: 0.85rem;
-      margin-bottom: 0.3rem;
-      color: #aaa;
-    }
-    .setup-box input, .setup-box select {
-      width: 100%;
-      padding: 0.5rem;
-      margin-bottom: 1rem;
-      background: #0f3460;
-      border: 1px solid #1a1a4e;
-      color: #e0e0e0;
-      border-radius: 4px;
-      font-family: inherit;
-      font-size: 0.9rem;
-    }
-    .setup-box button {
-      width: 100%;
-      padding: 0.6rem;
-      background: #00ff88;
-      color: #0a0a0a;
-      border: none;
-      border-radius: 4px;
-      font-weight: bold;
-      font-size: 1rem;
-      cursor: pointer;
-      font-family: inherit;
-    }
+    .setup-box { background: #1a1a2e; border: 1px solid #16213e; border-radius: 8px; padding: 2rem 2.5rem; width: 360px; }
+    .setup-box h1 { font-size: 1.4rem; color: #00ff88; margin-bottom: 0.3rem; }
+    .setup-box p.sub { font-size: 0.8rem; color: #888; margin-bottom: 1.5rem; }
+    .setup-box label { display: block; font-size: 0.85rem; margin-bottom: 0.3rem; color: #aaa; }
+    .setup-box input, .setup-box select { width: 100%; padding: 0.5rem; margin-bottom: 1rem; background: #0f3460; border: 1px solid #1a1a4e; color: #e0e0e0; border-radius: 4px; font-family: inherit; font-size: 0.9rem; }
+    .setup-box button { width: 100%; padding: 0.6rem; background: #00ff88; color: #0a0a0a; border: none; border-radius: 4px; font-weight: bold; font-size: 1rem; cursor: pointer; font-family: inherit; }
     .setup-box button:hover { background: #00cc6a; }
-    /* ── Terminal container ───────────────────────────── */
-    #terminal-container {
-      display: none;
-      flex: 1;
-      padding: 4px;
-    }
-    #terminal-container.active {
-      display: flex;
-    }
+    #terminal-container { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+    #terminal-container.active { display: block; }
   </style>
 </head>
 <body>
-  <!-- Setup screen -->
   <div id="setup">
     <div class="setup-box">
       <h1>WALL STREET WAR ROOM</h1>
@@ -91,114 +30,97 @@
       <input type="text" id="name" value="Player" maxlength="20" />
       <label for="weeks">Season Length</label>
       <select id="weeks">
-        <option value="3">3 weeks (Quick Play)</option>
-        <option value="5">5 weeks</option>
-        <option value="10">10 weeks</option>
-        <option value="13">13 weeks</option>
-        <option value="26" selected>26 weeks (Full Season)</option>
+        <option value="3">3 months (Quick Play)</option>
+        <option value="5">5 months</option>
+        <option value="10">10 months</option>
+        <option value="13">13 months</option>
+        <option value="26" selected>26 months (Full Season)</option>
       </select>
       <label for="seed">Seed (blank = random)</label>
       <input type="text" id="seed" placeholder="random" />
       <button id="start-btn">START GAME</button>
     </div>
   </div>
-
-  <!-- Terminal -->
   <div id="terminal-container"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+  <script src="/static/xterm.js"></script>
+  <script src="/static/addon-fit.js"></script>
   <script>
-    const setupEl  = document.getElementById('setup');
-    const termEl   = document.getElementById('terminal-container');
-    const startBtn = document.getElementById('start-btn');
+    document.getElementById('start-btn').addEventListener('click', function() {
+      try {
+        var name = document.getElementById('name').value.trim() || 'Player';
+        var weeks = document.getElementById('weeks').value;
+        var seedInput = document.getElementById('seed').value.trim();
+        var seed = seedInput ? parseInt(seedInput, 10) : Math.floor(Math.random() * 4294967296);
 
-    startBtn.addEventListener('click', () => {
-      const name  = document.getElementById('name').value.trim() || 'Player';
-      const weeks = document.getElementById('weeks').value;
-      const seedInput = document.getElementById('seed').value.trim();
-      const seed  = seedInput ? parseInt(seedInput, 10) : Math.floor(Math.random() * 4294967296);
+        // Hide setup, show terminal
+        document.getElementById('setup').style.display = 'none';
+        var termEl = document.getElementById('terminal-container');
+        termEl.style.display = 'block';
 
-      setupEl.classList.add('hidden');
-      termEl.classList.add('active');
-      startTerminal(name, weeks, seed);
-    });
+        // Create terminal
+        var term = new Terminal({
+          cursorBlink: true,
+          fontSize: 14,
+          fontFamily: "'Courier New', monospace",
+          theme: { background: '#0a0a0a', foreground: '#e0e0e0', cursor: '#00ff88' },
+          convertEol: true,
+          scrollback: 5000,
+        });
 
-    function startTerminal(name, weeks, seed) {
-      const term = new window.Terminal({
-        cursorBlink: true,
-        fontSize: 14,
-        fontFamily: "'Courier New', monospace",
-        theme: {
-          background: '#0a0a0a',
-          foreground: '#e0e0e0',
-          cursor: '#00ff88',
-        },
-        convertEol: true,
-        scrollback: 5000,
-      });
+        term.open(termEl);
 
-      // FitAddon: try multiple export paths for compatibility
-      let fitAddon = null;
-      if (window.FitAddon && window.FitAddon.FitAddon) {
-        fitAddon = new window.FitAddon.FitAddon();
-      } else if (window.FitAddon) {
-        fitAddon = new window.FitAddon();
-      }
-      if (fitAddon) term.loadAddon(fitAddon);
-      term.open(termEl);
-      if (fitAddon) fitAddon.fit();
-      window.addEventListener('resize', () => { if (fitAddon) fitAddon.fit(); });
-
-      // Line buffer for user input
-      let inputBuffer = '';
-      let inputResolve = null;
-
-      // WebSocket connection
-      const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-      const wsUrl = `${proto}://${location.host}/ws/play?name=${encodeURIComponent(name)}&weeks=${weeks}&seed=${seed}`;
-      const ws = new WebSocket(wsUrl);
-
-      ws.onopen = () => {
-        term.write('\x1b[1;32mConnected to Wall Street War Room\x1b[0m\r\n\r\n');
-      };
-
-      ws.onmessage = (event) => {
-        term.write(event.data);
-      };
-
-      ws.onclose = () => {
-        term.write('\r\n\x1b[1;33mConnection closed. Refresh to play again.\x1b[0m\r\n');
-      };
-
-      ws.onerror = () => {
-        term.write('\r\n\x1b[1;31mWebSocket error. Check your connection.\x1b[0m\r\n');
-      };
-
-      // Handle keyboard input
-      term.onData((data) => {
-        if (ws.readyState !== WebSocket.OPEN) return;
-
-        for (const ch of data) {
-          if (ch === '\r' || ch === '\n') {
-            // Enter: send the line
-            term.write('\r\n');
-            ws.send(inputBuffer);
-            inputBuffer = '';
-          } else if (ch === '\x7f' || ch === '\b') {
-            // Backspace
-            if (inputBuffer.length > 0) {
-              inputBuffer = inputBuffer.slice(0, -1);
-              term.write('\b \b');
-            }
-          } else if (ch >= ' ') {
-            // Printable character
-            inputBuffer += ch;
-            term.write(ch);
+        // Fit addon
+        try {
+          if (window.FitAddon) {
+            var fa = window.FitAddon.FitAddon ? new window.FitAddon.FitAddon() : new window.FitAddon();
+            term.loadAddon(fa);
+            fa.fit();
+            window.addEventListener('resize', function() { try { fa.fit(); } catch(e){} });
           }
-        }
-      });
-    }
+        } catch(e) {}
+
+        term.write('Connecting...\r\n');
+
+        // Connect WebSocket
+        var proto = location.protocol === 'https:' ? 'wss' : 'ws';
+        var wsUrl = proto + '://' + location.host + '/ws/play?name=' + encodeURIComponent(name) + '&weeks=' + weeks + '&seed=' + seed;
+        term.write('URL: ' + wsUrl + '\r\n');
+
+        var ws = new WebSocket(wsUrl);
+        var inputBuffer = '';
+
+        ws.onopen = function() {
+          term.write('\x1b[1;32mConnected to Wall Street War Room\x1b[0m\r\n\r\n');
+        };
+        ws.onmessage = function(event) { term.write(event.data); };
+        ws.onclose = function(e) { term.write('\r\n\x1b[1;33mConnection closed (code=' + e.code + '). Refresh to play again.\x1b[0m\r\n'); };
+        ws.onerror = function(e) { term.write('\r\n\x1b[1;31mWebSocket error.\x1b[0m\r\n'); };
+
+        term.onData(function(data) {
+          if (ws.readyState !== WebSocket.OPEN) return;
+          for (var i = 0; i < data.length; i++) {
+            var ch = data[i];
+            if (ch === '\r' || ch === '\n') {
+              term.write('\r\n');
+              ws.send(inputBuffer);
+              inputBuffer = '';
+            } else if (ch === '\x7f' || ch === '\b') {
+              if (inputBuffer.length > 0) { inputBuffer = inputBuffer.slice(0, -1); term.write('\b \b'); }
+            } else if (ch >= ' ') {
+              inputBuffer += ch;
+              term.write(ch);
+            }
+          }
+        });
+
+        term.focus();
+      } catch(e) {
+        document.body.style.color = '#ff4444';
+        document.body.style.padding = '2rem';
+        document.body.innerText = 'ERROR: ' + e.message + '\n\n' + e.stack;
+      }
+    });
   </script>
 </body>
 </html>

@@ -15,13 +15,17 @@ from wallstreet.models.portfolio import Allocation, PortfolioState
 class RulesBasedRiskCommittee(RiskAgent):
     """Deterministic rules-based risk committee.
 
-    Applies 6 rules to assess portfolio risk:
-    1. Concentration risk (single sector > 40%)
-    2. Regime alignment (cyclicals in recession)
+    Applies 10 rules to assess portfolio risk:
+    1. Concentration risk (single sector |weight| > 40%)
+    2. Regime alignment (long cyclicals in recession)
     3. Volatility exposure (concentration in high-vol environments)
     4. Interest rate sensitivity (tech in rising rates)
     5. Drawdown proximity (portfolio near peak drawdown)
-    6. Diversification bonus (all sectors <= 30%)
+    6. Diversification bonus (all |weights| <= 30%)
+    7. Gross exposure / leverage risk
+    8. Short squeeze risk (shorts during high volatility)
+    9. Counter-trend short warning (shorting in bull market)
+    10. High cash drag (>50% uninvested)
 
     Designed to be swapped with an LLM-based agent later.
     """
@@ -37,31 +41,32 @@ class RulesBasedRiskCommittee(RiskAgent):
         warnings: list[str] = []
         fracs = allocation.as_fractions
 
-        # Rule 1: Concentration risk
+        # Rule 1: Concentration risk (uses absolute weight)
         for sector, weight in fracs.items():
-            if weight > 0.60:
+            abs_w = abs(weight)
+            if abs_w > 0.60:
                 risk_score += 3
+                label = "short" if weight < 0 else "long"
                 warnings.append(
-                    f"CRITICAL: {sector.value} at {weight * 100:.0f}% "
+                    f"CRITICAL: {sector.value} {label} at {abs_w * 100:.0f}% "
                     f"-- extreme concentration."
                 )
-            elif weight > 0.40:
+            elif abs_w > 0.40:
                 risk_score += 2
+                label = "short" if weight < 0 else "long"
                 warnings.append(
-                    f"WARNING: {sector.value} at {weight * 100:.0f}% "
+                    f"WARNING: {sector.value} {label} at {abs_w * 100:.0f}% "
                     f"-- high concentration."
                 )
 
-        # Rule 2: Regime alignment
-        cyclical_exposure = (
-            fracs.get(Sector.TECH, 0)
-            + fracs.get(Sector.INDUSTRIALS, 0)
-            + fracs.get(Sector.ENERGY, 0)
+        # Rule 2: Regime alignment (only long cyclical exposure counts)
+        long_cyclical = sum(
+            max(0.0, fracs.get(s, 0)) for s in (Sector.TECH, Sector.INDUSTRIALS, Sector.ENERGY)
         )
-        if macro_state.regime == Regime.RECESSION and cyclical_exposure > 0.60:
+        if macro_state.regime == Regime.RECESSION and long_cyclical > 0.60:
             risk_score += 2
             warnings.append(
-                f"Cyclical exposure ({cyclical_exposure * 100:.0f}%) is high "
+                f"Cyclical exposure ({long_cyclical * 100:.0f}%) is high "
                 f"for a recession regime."
             )
 
@@ -70,7 +75,7 @@ class RulesBasedRiskCommittee(RiskAgent):
             VolatilityState.HIGH,
             VolatilityState.CRISIS,
         ):
-            max_weight = max(fracs.values())
+            max_weight = max(abs(w) for w in fracs.values())
             if max_weight > 0.35:
                 risk_score += 1
                 warnings.append(
@@ -100,9 +105,58 @@ class RulesBasedRiskCommittee(RiskAgent):
                         f"consider defensive positioning."
                     )
 
-        # Rule 6: Diversification bonus
-        if all(w <= 0.30 for w in fracs.values()):
+        # Rule 6: Diversification bonus (uses absolute weight)
+        if all(abs(w) <= 0.30 for w in fracs.values()):
             risk_score = max(1, risk_score - 1)
+
+        # Rule 7: Gross exposure / leverage risk
+        gross = allocation.gross_exposure
+        if gross > 1.80:
+            risk_score += 2
+            warnings.append(
+                f"CRITICAL: Gross exposure at {gross * 100:.0f}% -- "
+                f"extreme leverage amplifies losses."
+            )
+        elif gross > 1.40:
+            risk_score += 1
+            warnings.append(
+                f"WARNING: Gross exposure at {gross * 100:.0f}% -- "
+                f"elevated leverage risk."
+            )
+
+        # Rule 8: Short squeeze risk (shorts during high volatility)
+        if allocation.has_shorts and macro_state.volatility_state in (
+            VolatilityState.HIGH,
+            VolatilityState.CRISIS,
+        ):
+            short_sectors = [
+                s.value for s, w in allocation.weights.items() if w < 0
+            ]
+            risk_score += 1
+            warnings.append(
+                f"Short positions ({', '.join(short_sectors)}) during high "
+                f"volatility increase squeeze risk."
+            )
+
+        # Rule 9: Counter-trend short warning (shorting in bull market)
+        if allocation.has_shorts and macro_state.regime == Regime.BULL:
+            short_sectors = [
+                s.value for s, w in allocation.weights.items() if w < 0
+            ]
+            risk_score += 1
+            warnings.append(
+                f"Shorting ({', '.join(short_sectors)}) in a bull market "
+                f"is a counter-trend bet -- proceed with caution."
+            )
+
+        # Rule 10: High cash drag
+        cash_pct = allocation.cash_weight
+        if cash_pct > 0.50:
+            risk_score += 1
+            warnings.append(
+                f"Holding {cash_pct * 100:.0f}% cash -- significant drag "
+                f"on returns. Consider deploying capital."
+            )
 
         risk_score = min(10, max(1, risk_score))
         critique = self._build_critique(risk_score, warnings, macro_state)

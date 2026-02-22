@@ -8,35 +8,36 @@ from wallstreet.models.enums import RateDirection, Regime, Sector, VolatilitySta
 from wallstreet.models.events import ShockEvent
 from wallstreet.models.market import MacroState
 
-# SECTOR_PARAMS[regime][sector] = (weekly_mean, weekly_std)
+# SECTOR_PARAMS[regime][sector] = (monthly_mean, monthly_std)
+# Calibrated to approximate real S&P 500 sector monthly distributions.
 SECTOR_PARAMS: dict[Regime, dict[Sector, tuple[float, float]]] = {
     Regime.BULL: {
-        Sector.TECH:        (0.020, 0.035),
-        Sector.ENERGY:      (0.012, 0.040),
-        Sector.FINANCIALS:  (0.015, 0.030),
-        Sector.CONSUMER:    (0.010, 0.020),
-        Sector.INDUSTRIALS: (0.013, 0.025),
+        Sector.TECH:        (0.015, 0.050),
+        Sector.ENERGY:      (0.010, 0.055),
+        Sector.FINANCIALS:  (0.012, 0.045),
+        Sector.CONSUMER:    (0.008, 0.035),
+        Sector.INDUSTRIALS: (0.010, 0.040),
     },
     Regime.BEAR: {
-        Sector.TECH:        (-0.015, 0.045),
-        Sector.ENERGY:      (-0.010, 0.050),
-        Sector.FINANCIALS:  (-0.020, 0.040),
-        Sector.CONSUMER:    (-0.005, 0.025),
-        Sector.INDUSTRIALS: (-0.012, 0.035),
+        Sector.TECH:        (-0.015, 0.065),
+        Sector.ENERGY:      (-0.010, 0.070),
+        Sector.FINANCIALS:  (-0.020, 0.060),
+        Sector.CONSUMER:    (-0.005, 0.040),
+        Sector.INDUSTRIALS: (-0.012, 0.055),
     },
     Regime.RECESSION: {
-        Sector.TECH:        (-0.025, 0.055),
-        Sector.ENERGY:      (-0.020, 0.060),
-        Sector.FINANCIALS:  (-0.030, 0.050),
-        Sector.CONSUMER:    (-0.008, 0.030),
-        Sector.INDUSTRIALS: (-0.022, 0.045),
+        Sector.TECH:        (-0.025, 0.075),
+        Sector.ENERGY:      (-0.020, 0.080),
+        Sector.FINANCIALS:  (-0.030, 0.070),
+        Sector.CONSUMER:    (-0.008, 0.045),
+        Sector.INDUSTRIALS: (-0.022, 0.060),
     },
     Regime.RECOVERY: {
-        Sector.TECH:        (0.015, 0.040),
-        Sector.ENERGY:      (0.018, 0.045),
-        Sector.FINANCIALS:  (0.020, 0.035),
-        Sector.CONSUMER:    (0.008, 0.022),
-        Sector.INDUSTRIALS: (0.016, 0.030),
+        Sector.TECH:        (0.012, 0.055),
+        Sector.ENERGY:      (0.015, 0.060),
+        Sector.FINANCIALS:  (0.016, 0.050),
+        Sector.CONSUMER:    (0.006, 0.035),
+        Sector.INDUSTRIALS: (0.012, 0.045),
     },
 }
 
@@ -77,7 +78,7 @@ VOL_SCALING: dict[VolatilityState, float] = {
 def generate_sector_returns(
     macro: MacroState, rng: random.Random
 ) -> dict[Sector, float]:
-    """Generate one week of sector returns based on macro state.
+    """Generate one period of sector returns based on macro state.
 
     1. Look up base (mean, std) for regime + sector
     2. Apply rate direction modifiers

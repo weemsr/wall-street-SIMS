@@ -100,6 +100,96 @@ class TestRulesBasedRiskCommittee:
         risk = self.agent.evaluate(alloc, macro, portfolio, game)
         assert any("tech" in w.lower() and "rising" in w.lower() for w in risk.warnings)
 
+    def test_leverage_risk_warning(self) -> None:
+        """High gross exposure triggers leverage warning."""
+        macro = MacroState(
+            regime=Regime.RECOVERY,
+            volatility_state=VolatilityState.NORMAL,
+            rate_direction=RateDirection.STABLE,
+            week=3,
+        )
+        portfolio = PortfolioState(
+            cash=0.0,
+            holdings=Holdings(positions={s: 200_000.0 for s in Sector}),
+            total_value=1_000_000.0,
+            week=3,
+        )
+        # gross = 80+30+20+20+50 = 200% -> extreme leverage
+        alloc = Allocation(weights={
+            Sector.TECH: 80.0, Sector.ENERGY: 30.0,
+            Sector.FINANCIALS: 20.0, Sector.CONSUMER: 20.0,
+            Sector.INDUSTRIALS: -50.0,
+        })
+        game = _make_game_state(macro, portfolio)
+        risk = self.agent.evaluate(alloc, macro, portfolio, game)
+        assert any("gross exposure" in w.lower() or "leverage" in w.lower() for w in risk.warnings)
+
+    def test_short_squeeze_warning_high_vol(self) -> None:
+        """Short positions during high volatility trigger squeeze warning."""
+        macro = MacroState(
+            regime=Regime.RECOVERY,
+            volatility_state=VolatilityState.HIGH,
+            rate_direction=RateDirection.STABLE,
+            week=3,
+        )
+        portfolio = PortfolioState(
+            cash=0.0,
+            holdings=Holdings(positions={s: 200_000.0 for s in Sector}),
+            total_value=1_000_000.0,
+            week=3,
+        )
+        alloc = Allocation(weights={
+            Sector.TECH: 40.0, Sector.ENERGY: 30.0,
+            Sector.FINANCIALS: 20.0, Sector.CONSUMER: 30.0,
+            Sector.INDUSTRIALS: -20.0,
+        })
+        game = _make_game_state(macro, portfolio)
+        risk = self.agent.evaluate(alloc, macro, portfolio, game)
+        assert any("squeeze" in w.lower() for w in risk.warnings)
+
+    def test_counter_trend_short_warning_bull(self) -> None:
+        """Shorting in bull market triggers counter-trend warning."""
+        macro = MacroState(
+            regime=Regime.BULL,
+            volatility_state=VolatilityState.NORMAL,
+            rate_direction=RateDirection.STABLE,
+            week=3,
+        )
+        portfolio = PortfolioState(
+            cash=0.0,
+            holdings=Holdings(positions={s: 200_000.0 for s in Sector}),
+            total_value=1_000_000.0,
+            week=3,
+        )
+        alloc = Allocation(weights={
+            Sector.TECH: 40.0, Sector.ENERGY: 30.0,
+            Sector.FINANCIALS: 20.0, Sector.CONSUMER: 30.0,
+            Sector.INDUSTRIALS: -20.0,
+        })
+        game = _make_game_state(macro, portfolio)
+        risk = self.agent.evaluate(alloc, macro, portfolio, game)
+        assert any("counter-trend" in w.lower() or "bull market" in w.lower() for w in risk.warnings)
+
+    def test_high_cash_warning(self) -> None:
+        """More than 50% cash triggers a warning."""
+        macro = MacroState(
+            regime=Regime.BULL,
+            volatility_state=VolatilityState.NORMAL,
+            rate_direction=RateDirection.STABLE,
+            week=3,
+        )
+        portfolio = PortfolioState(
+            cash=500_000.0,
+            holdings=Holdings(positions={s: 100_000.0 for s in Sector}),
+            total_value=1_000_000.0,
+            week=3,
+        )
+        # 8% per sector = 40% invested, 60% cash
+        alloc = Allocation(weights={s: 8.0 for s in Sector})
+        game = _make_game_state(macro, portfolio)
+        risk = self.agent.evaluate(alloc, macro, portfolio, game)
+        assert any("cash" in w.lower() for w in risk.warnings)
+
     def test_risk_score_bounds(
         self,
         sample_macro_bull: MacroState,

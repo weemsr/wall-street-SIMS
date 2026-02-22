@@ -14,10 +14,11 @@ from wallstreet.scoring.calculator import (
 
 
 class TestCAGR:
-    def test_doubling_in_26_weeks(self) -> None:
-        # (2)^(52/26) - 1 = 4 - 1 = 3.0 (300% annualized)
+    def test_doubling_in_26_months(self) -> None:
+        # (2)^(12/26) - 1 ≈ 0.369 (36.9% annualized)
         cagr = compute_cagr(1_000_000, 2_000_000, 26)
-        assert cagr == pytest.approx(3.0, rel=1e-6)
+        expected = (2.0 ** (12.0 / 26.0)) - 1.0
+        assert cagr == pytest.approx(expected, rel=1e-6)
 
     def test_no_change(self) -> None:
         cagr = compute_cagr(1_000_000, 1_000_000, 26)
@@ -68,7 +69,7 @@ class TestAnnualizedVolatility:
         n = len(returns)
         mean = sum(returns) / n
         var = sum((r - mean) ** 2 for r in returns) / (n - 1)
-        expected = math.sqrt(var) * math.sqrt(52)
+        expected = math.sqrt(var) * math.sqrt(12)
         vol = compute_annualized_volatility(returns)
         assert vol == pytest.approx(expected, rel=1e-6)
 

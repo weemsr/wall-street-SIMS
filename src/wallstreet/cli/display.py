@@ -49,7 +49,7 @@ def display_intro(game_state: GameState, con: Console | None = None) -> None:
     banner.append("Portfolio Management Roguelike\n\n", style="dim")
     banner.append(f"Player: {game_state.config.player_name}\n")
     banner.append(f"Starting Capital: ${game_state.config.starting_cash:,.0f}\n")
-    banner.append(f"Season Length: {game_state.config.total_weeks} weeks\n")
+    banner.append(f"Season Length: {game_state.config.total_weeks} months\n")
     banner.append(f"Seed: {game_state.config.seed}\n")
 
     c.print(Panel(banner, title="[bold]NEW GAME[/bold]", border_style="blue"))
@@ -57,10 +57,10 @@ def display_intro(game_state: GameState, con: Console | None = None) -> None:
 
 
 def display_week_header(week: int, total_weeks: int, con: Console | None = None) -> None:
-    """Show week divider."""
+    """Show month divider."""
     c = con or console
     c.print()
-    c.print(Rule(f"[bold] WEEK {week} of {total_weeks} [/bold]"))
+    c.print(Rule(f"[bold] MONTH {week} of {total_weeks} [/bold]"))
     c.print()
 
 
@@ -92,7 +92,7 @@ def display_events(events: list[ShockEvent], con: Console | None = None) -> None
     """Show weekly shock events."""
     c = con or console
     if not events:
-        c.print("[dim]No major events this week.[/dim]")
+        c.print("[dim]No major events this month.[/dim]")
         c.print()
         return
 
@@ -131,7 +131,14 @@ def display_portfolio(
     for sector in Sector:
         value = portfolio.holdings.positions.get(sector, 0.0)
         weight = (value / portfolio.total_value * 100) if portfolio.total_value > 0 else 0.0
-        table.add_row(sector.value, f"${value:,.0f}", f"{weight:.1f}%")
+        label = sector.value
+        if value < 0:
+            label += " [red](SHORT)[/red]"
+        table.add_row(label, f"${value:,.0f}", f"{weight:.1f}%")
+
+    if portfolio.cash > 0.01:
+        cash_pct = (portfolio.cash / portfolio.total_value * 100) if portfolio.total_value > 0 else 0.0
+        table.add_row("[dim]Cash[/dim]", f"[dim]${portfolio.cash:,.0f}[/dim]", f"[dim]{cash_pct:.1f}%[/dim]")
 
     table.add_section()
     pnl = portfolio.total_value - initial_value
@@ -171,7 +178,7 @@ def display_risk_assessment(risk: RiskAssessment, con: Console | None = None) ->
 def display_week_results(week_result: WeekResult, con: Console | None = None) -> None:
     """Show results after a week of play."""
     c = con or console
-    table = Table(title=f"Week {week_result.week} Results")
+    table = Table(title=f"Month {week_result.week} Results")
     table.add_column("Sector", style="bold")
     table.add_column("Return", justify="right")
     table.add_column("Weight", justify="right")
@@ -183,14 +190,27 @@ def display_week_results(week_result: WeekResult, con: Console | None = None) ->
         weight = fracs[sector]
         contrib = ret * weight
         ret_color = "green" if ret >= 0 else "red"
+        contrib_color = "green" if contrib >= 0 else "red"
         sign_r = "+" if ret >= 0 else ""
         sign_c = "+" if contrib >= 0 else ""
+        weight_label = f"{weight * 100:.0f}%"
+        if weight < 0:
+            weight_label += " [red](S)[/red]"
 
         table.add_row(
             sector.value,
             f"[{ret_color}]{sign_r}{ret * 100:.2f}%[/{ret_color}]",
-            f"{weight * 100:.0f}%",
-            f"[{ret_color}]{sign_c}{contrib * 100:.2f}%[/{ret_color}]",
+            weight_label,
+            f"[{contrib_color}]{sign_c}{contrib * 100:.2f}%[/{contrib_color}]",
+        )
+
+    cash_w = week_result.allocation.cash_weight
+    if cash_w > 0.001:
+        table.add_row(
+            "[dim]Cash[/dim]",
+            "[dim]+0.00%[/dim]",
+            f"[dim]{cash_w * 100:.0f}%[/dim]",
+            "[dim]+0.00%[/dim]",
         )
 
     table.add_section()
@@ -261,7 +281,7 @@ def display_final_scorecard(scorecard: ScoreCard, con: Console | None = None) ->
         "Sharpe Ratio",
         f"[{sharpe_color}]{scorecard.sharpe_ratio:.3f}[/{sharpe_color}]",
     )
-    table.add_row("Season Length", f"{scorecard.total_weeks} weeks")
+    table.add_row("Season Length", f"{scorecard.total_weeks} months")
 
     c.print(table)
     c.print()
@@ -293,14 +313,14 @@ def display_game_list(games: list[dict], con: Console | None = None) -> None:
     table = Table(title="Saved Games")
     table.add_column("Game ID", style="bold")
     table.add_column("Player")
-    table.add_column("Weeks")
+    table.add_column("Months")
     table.add_column("Status")
     table.add_column("Final Value", justify="right")
     table.add_column("Sharpe", justify="right")
     table.add_column("Created")
 
     for g in games:
-        status = "Complete" if g["is_complete"] else f"Week {g['current_week']}/{g['total_weeks']}"
+        status = "Complete" if g["is_complete"] else f"Month {g['current_week']}/{g['total_weeks']}"
         final_val = f"${g['final_value']:,.0f}" if g["final_value"] else "-"
         sharpe = f"{g['sharpe_ratio']:.3f}" if g["sharpe_ratio"] is not None else "-"
         table.add_row(
@@ -401,7 +421,7 @@ def display_rival_comparison(
     r_color = "green" if rival_result.portfolio_return >= 0 else "red"
     r_sign = "+" if rival_result.portfolio_return >= 0 else ""
     table.add_row(
-        "Weekly Return",
+        "Monthly Return",
         f"[{p_color}]{p_sign}{player_return * 100:.2f}%[/{p_color}]",
         f"[{r_color}]{r_sign}{rival_result.portfolio_return * 100:.2f}%[/{r_color}]",
     )
@@ -473,13 +493,13 @@ def display_expanded_analytics(metrics: ExpandedMetrics, con: Console | None = N
     table.add_column("Current", justify="right")
 
     table.add_row(
-        "Rolling Volatility (4w ann.)",
+        "Rolling Volatility (4m ann.)",
         f"{metrics.current_rolling_vol * 100:.2f}%",
     )
 
     sharpe_color = "green" if metrics.current_rolling_sharpe >= 0 else "red"
     table.add_row(
-        "Rolling Sharpe (4w ann.)",
+        "Rolling Sharpe (4m ann.)",
         f"[{sharpe_color}]{metrics.current_rolling_sharpe:.3f}[/{sharpe_color}]",
     )
 
@@ -498,6 +518,16 @@ def display_expanded_analytics(metrics: ExpandedMetrics, con: Console | None = N
     table.add_row(
         "Concentration (HHI)",
         f"[{conc_color}]{metrics.current_concentration:.3f}[/{conc_color}]",
+    )
+
+    # Gross exposure: 1.0 = long only, >1.0 = leveraged
+    ge = metrics.current_gross_exposure
+    ge_color = "green" if ge <= 1.01 else (
+        "yellow" if ge <= 1.50 else "red"
+    )
+    table.add_row(
+        "Gross Exposure",
+        f"[{ge_color}]{ge * 100:.0f}%[/{ge_color}]",
     )
 
     c.print(table)

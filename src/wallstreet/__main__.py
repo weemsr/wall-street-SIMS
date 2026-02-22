@@ -25,7 +25,7 @@ def main() -> None:
     parser.add_argument(
         "--weeks", type=int, default=26,
         choices=[3, 5, 10, 13, 26],
-        help="Season length in weeks (3 = quick play)",
+        help="Season length in months (3 = quick play)",
     )
     parser.add_argument(
         "--list-games", action="store_true",

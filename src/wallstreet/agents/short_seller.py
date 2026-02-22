@@ -103,6 +103,29 @@ _MOMENTUM_REVERSAL_CRITIQUES: dict[Sector, list[str]] = {
     ],
 }
 
+_SHORT_SQUEEZE_CRITIQUES: dict[Sector, list[str]] = {
+    Sector.TECH: [
+        "Shorting tech in a bull market? Bold. When the squeeze hits, this portfolio will feel it.",
+        "This PM is short tech while the sector is rallying. We love to see it — easy money on the squeeze.",
+    ],
+    Sector.ENERGY: [
+        "Short energy into a rising commodity cycle? This PM is about to learn about short squeezes.",
+        "Betting against energy here is contrarian for the wrong reasons. Supply constraints say otherwise.",
+    ],
+    Sector.FINANCIALS: [
+        "Shorting financials while credit conditions are stable. This position is exposed to a violent unwind.",
+        "A short financials bet this size is a gift. One positive earnings surprise and this blows up.",
+    ],
+    Sector.CONSUMER: [
+        "Consumer shorts in a healthy economy? This PM is overthinking it. Spending data disagrees.",
+        "Shorting consumer staples — the definition of picking up pennies in front of a steamroller.",
+    ],
+    Sector.INDUSTRIALS: [
+        "Short industrials while CapEx is expanding? This PM is on the wrong side of the cycle.",
+        "Betting against industrials here is fighting the order book. We're positioned for the squeeze.",
+    ],
+}
+
 
 class ShortSellerAgent:
     """Scans player allocation for vulnerabilities and fires short thesis attacks.
@@ -123,22 +146,27 @@ class ShortSellerAgent:
         Returns a ShortThesis if a vulnerability is found, otherwise None.
         Checks are evaluated in priority order; first match wins.
         """
-        # 1. Concentration attack: any sector > 40%
+        # 1. Concentration attack: any sector |weight| > 40%
         result = self._check_concentration(allocation, rng)
         if result:
             return result
 
-        # 2. Regime misalignment: cyclicals overweight in recession
+        # 2. Player short squeeze: shorts in bull/recovery market
+        result = self._check_player_short(allocation, macro, rng)
+        if result:
+            return result
+
+        # 3. Regime misalignment: cyclicals overweight in recession
         result = self._check_regime_misalignment(allocation, macro, rng)
         if result:
             return result
 
-        # 3. Rate sensitivity: tech overweight in rising rates
+        # 4. Rate sensitivity: tech overweight in rising rates
         result = self._check_rate_sensitivity(allocation, macro, rng)
         if result:
             return result
 
-        # 4. Momentum reversal: sector with streak + heavy allocation
+        # 5. Momentum reversal: sector with streak + heavy allocation
         result = self._check_momentum_reversal(allocation, game_state, rng)
         if result:
             return result
@@ -149,10 +177,11 @@ class ShortSellerAgent:
     def _check_concentration(
         self, allocation: Allocation, rng: random.Random
     ) -> ShortThesis | None:
-        """Attack any sector with > 40% allocation."""
+        """Attack any sector with |weight| > 40%."""
         for sector, weight in allocation.weights.items():
-            if weight > 40.0:
-                severity = (weight - 40.0) / 60.0  # 0 at 40%, 1 at 100%
+            abs_w = abs(weight)
+            if abs_w > 40.0:
+                severity = (abs_w - 40.0) / 60.0  # 0 at 40%, 1 at 100%
                 conviction = round(0.60 + severity * 0.35, 2)  # 0.60 – 0.95
                 critique = rng.choice(_CONCENTRATION_CRITIQUES[sector])
                 return ShortThesis(
@@ -161,6 +190,31 @@ class ShortSellerAgent:
                     conviction=min(conviction, 0.95),
                 )
         return None
+
+    def _check_player_short(
+        self, allocation: Allocation, macro: MacroState, rng: random.Random
+    ) -> ShortThesis | None:
+        """Attack player short positions in bull/recovery markets (squeeze risk)."""
+        if macro.regime not in (Regime.BULL, Regime.RECOVERY):
+            return None
+
+        # Find the largest short position
+        short_weights = {
+            s: w for s, w in allocation.weights.items() if w < -10.0
+        }
+        if not short_weights:
+            return None
+
+        target = min(short_weights, key=short_weights.get)  # type: ignore[arg-type]
+        weight = abs(short_weights[target])
+        severity = (weight - 10.0) / 40.0  # 0 at -10%, 1 at -50%
+        conviction = round(0.55 + severity * 0.35, 2)
+        critique = rng.choice(_SHORT_SQUEEZE_CRITIQUES[target])
+        return ShortThesis(
+            target_sector=target,
+            critique=critique,
+            conviction=min(conviction, 0.90),
+        )
 
     def _check_regime_misalignment(
         self, allocation: Allocation, macro: MacroState, rng: random.Random

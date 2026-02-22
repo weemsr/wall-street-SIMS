@@ -1,4 +1,4 @@
-"""Weekly shock event generation."""
+"""Periodic shock event generation."""
 
 import random
 
@@ -7,7 +7,7 @@ from wallstreet.models.enums import VolatilityState
 from wallstreet.models.events import ShockEvent, ShockEventTemplate
 from wallstreet.models.market import MacroState
 
-# Probability of [0, 1, 2] events per week, by volatility state
+# Probability of [0, 1, 2] events per period, by volatility state
 EVENT_COUNT_WEIGHTS: dict[VolatilityState, list[float]] = {
     VolatilityState.LOW:    [0.60, 0.30, 0.10],
     VolatilityState.NORMAL: [0.45, 0.40, 0.15],
@@ -21,11 +21,11 @@ def generate_weekly_events(
     rng: random.Random,
     catalog: list[ShockEventTemplate] | None = None,
 ) -> list[ShockEvent]:
-    """Select 0-2 shock events for this week.
+    """Select 0-2 shock events for this period.
 
     Event count is weighted by volatility state.
     Event selection is weighted by regime affinity.
-    Duplicate events in the same week are removed.
+    Duplicate events in the same period are removed.
     """
     if catalog is None:
         catalog = EVENT_CATALOG
