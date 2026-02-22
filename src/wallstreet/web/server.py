@@ -77,7 +77,7 @@ class WebSocketBridge:
         future = asyncio.run_coroutine_threadsafe(
             self.input_queue.get(), self.loop
         )
-        return future.result(timeout=300)
+        return future.result(timeout=600)
 
     def sync_confirm(self, prompt: str) -> bool:
         """Blocking yes/no confirm called from the game thread."""
@@ -112,12 +112,25 @@ async def play_game_ws(ws: WebSocket) -> None:
         try:
             while True:
                 data = await ws.receive_text()
+                if data == "":
+                    continue  # ignore keepalive pings
                 await bridge.input_queue.put(data)
         except WebSocketDisconnect:
             # Push a sentinel so sync_input unblocks
             await bridge.input_queue.put("")
 
     recv_task = asyncio.create_task(receive_loop())
+
+    async def keepalive_loop() -> None:
+        """Send WebSocket pings every 30s to prevent proxy idle timeouts."""
+        try:
+            while True:
+                await asyncio.sleep(30)
+                await ws.send_bytes(b"")  # empty ping frame
+        except Exception:
+            pass
+
+    keepalive_task = asyncio.create_task(keepalive_loop())
 
     try:
         await asyncio.to_thread(
@@ -140,6 +153,7 @@ async def play_game_ws(ws: WebSocket) -> None:
         except Exception:
             pass
     finally:
+        keepalive_task.cancel()
         recv_task.cancel()
         try:
             await recv_task

@@ -92,6 +92,12 @@
 
         ws.onopen = function() {
           term.write('\x1b[1;32mConnected to Wall Street War Room\x1b[0m\r\n\r\n');
+          // Keepalive ping every 30s to prevent proxy idle timeout
+          setInterval(function() {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send('');
+            }
+          }, 30000);
         };
         ws.onmessage = function(event) { term.write(event.data); };
         ws.onclose = function(e) { term.write('\r\n\x1b[1;33mConnection closed (code=' + e.code + '). Refresh to play again.\x1b[0m\r\n'); };
