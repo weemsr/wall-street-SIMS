@@ -78,11 +78,21 @@ def run_game(
     narrative_layer = GameNarrativeLayer()
     competition_layer = GameCompetitionLayer("momentum")
 
-    # Initialize game state
+    # Initialize game state — randomize starting regime so each seed
+    # produces a different opening environment
+    initial_macro = advance_macro_state(
+        MacroState(
+            regime=INITIAL_REGIME,
+            volatility_state=INITIAL_VOL_STATE,
+            rate_direction=INITIAL_RATE_DIR,
+            week=0,
+        ),
+        rng,
+    )
     initial_macro = MacroState(
-        regime=INITIAL_REGIME,
-        volatility_state=INITIAL_VOL_STATE,
-        rate_direction=INITIAL_RATE_DIR,
+        regime=initial_macro.regime,
+        volatility_state=initial_macro.volatility_state,
+        rate_direction=initial_macro.rate_direction,
         week=0,
     )
     portfolio = PortfolioState(
