@@ -18,55 +18,132 @@ SECTOR_ORDER: list[Sector] = [
     Sector.HEALTHCARE,
 ]
 
+SHORT_NAMES: dict[Sector, str] = {
+    Sector.TECH: "Tech",
+    Sector.ENERGY: "Energy",
+    Sector.FINANCIALS: "Financials",
+    Sector.CONSUMER: "Con Staples",
+    Sector.CONSUMER_DISC: "Con Disc",
+    Sector.INDUSTRIALS: "Industrials",
+    Sector.HEALTHCARE: "Healthcare",
+}
+
 
 def prompt_allocation(
     input_fn: Callable[[str], str] | None = None,
     print_fn: Callable[..., None] | None = None,
 ) -> Allocation:
-    """Prompt user for sector allocation percentages.
+    """Prompt user for sector allocation percentages one sector at a time.
 
-    Accepts space-separated values in sector order:
-      Tech Energy Financials Consumer Industrials
-
-    Validates sum 0-100%. Remainder held as cash (earns 0%). Retries on error.
+    Features:
+    - Sector-by-sector entry with running total and remaining budget
+    - Auto-complete suggestion for the last sector
+    - Type 'b' to go back one sector, 'r' to reset all
+    - Summary confirmation before submitting
     """
     _input = input_fn or console.input
     _print = print_fn or console.print
 
-    sector_names = " ".join(s.value for s in SECTOR_ORDER)
-    _print(f"[bold]Enter allocation (% for each sector, 0-100% total):[/bold]")
-    _print(f"[dim]  Order: {sector_names}[/dim]")
-    _print(f"[dim]  Example: 15 15 15 15 10 15 15  (fully invested)[/dim]")
-    _print(f"[dim]          8 8 8 8 5 8 5  (50% invested, 50% cash)[/dim]")
-    _print(f"[dim]  Negative = short (e.g. 40 30 20 30 -20). Max short: -50% per sector.[/dim]")
-    _print(f"[dim]  Gross exposure (sum of |weights|) capped at 200%.[/dim]")
+    n = len(SECTOR_ORDER)
+    max_label = max(len(SHORT_NAMES[s]) for s in SECTOR_ORDER)
 
     while True:
-        try:
-            raw = _input("[bold cyan]> [/bold cyan]").strip()
-            if not raw:
-                _print("[red]Please enter 7 space-separated numbers.[/red]")
-                continue
+        _print("[bold]Enter allocation (% for each sector, 0-100% total):[/bold]")
+        _print("[dim]  Negative = short. Max short: -50%/sector. Gross cap: 200%.[/dim]")
+        _print("[dim]  Type 'b' to go back, 'r' to reset.[/dim]")
 
-            parts = raw.split()
-            if len(parts) != 7:
-                _print(
-                    f"[red]Expected 7 values, got {len(parts)}. "
-                    f"Enter percentages for: {sector_names}[/red]"
+        values: list[float] = [0.0] * n
+        i = 0
+
+        while i < n:
+            sector = SECTOR_ORDER[i]
+            label = SHORT_NAMES[sector].ljust(max_label)
+            current_sum = sum(values[:i])
+            remaining = 100.0 - current_sum
+
+            # Build the prompt string
+            if i == n - 1:
+                # Last sector: show auto-complete suggestion
+                suggestion = remaining
+                prompt = (
+                    f"[bold cyan]  [{i+1}/{n}] {label} : [/bold cyan]"
+                    f"[dim](Enter={suggestion:g}) [/dim]"
                 )
+            else:
+                prompt = f"[bold cyan]  [{i+1}/{n}] {label} : [/bold cyan]"
+
+            raw = _input(prompt).strip()
+
+            # Navigation commands
+            if raw.lower() in ("b", "back"):
+                if i > 0:
+                    i -= 1
+                continue
+            if raw.lower() in ("r", "reset"):
+                values = [0.0] * n
+                i = 0
+                _print("[yellow]  Reset — starting over.[/yellow]")
                 continue
 
-            values = [float(p) for p in parts]
-            weights = dict(zip(SECTOR_ORDER, values))
-            allocation = Allocation(weights=weights)
-            return allocation
-
-        except ValueError as e:
-            error_msg = str(e)
-            if "could not convert" in error_msg.lower() or "invalid literal" in error_msg.lower():
-                _print("[red]Invalid number. Enter numeric values only.[/red]")
+            # Auto-complete on last sector if empty
+            if raw == "" and i == n - 1:
+                values[i] = remaining
+            elif raw == "":
+                _print("[red]  Enter a number.[/red]")
+                continue
             else:
-                _print(f"[red]{error_msg}[/red]")
+                try:
+                    values[i] = float(raw)
+                except ValueError:
+                    _print("[red]  Invalid number. Try again.[/red]")
+                    continue
+
+            # Show running total after entry
+            running_sum = sum(values[: i + 1])
+            rem_after = 100.0 - running_sum
+            if running_sum <= 100:
+                color = "green"
+            elif running_sum <= 200:
+                color = "yellow"
+            else:
+                color = "red"
+            _print(
+                f"[{color}]         Total: {running_sum:g}%[/{color}]"
+                f"  [dim]Remaining: {rem_after:g}%[/dim]"
+            )
+
+            i += 1
+
+        # Show summary
+        total = sum(values)
+        cash = max(0.0, 100.0 - total)
+        _print()
+        _print("[bold]Allocation Summary:[/bold]")
+        parts = []
+        for idx, sector in enumerate(SECTOR_ORDER):
+            parts.append(f"{SHORT_NAMES[sector]}: {values[idx]:g}%")
+        _print(f"  {' | '.join(parts)}")
+        total_color = "green" if total <= 100 else "yellow"
+        _print(
+            f"  [{total_color}]Total invested: {total:g}%[/{total_color}]"
+            f"  [dim]Cash: {cash:g}%[/dim]"
+        )
+
+        # Try to create and validate the allocation
+        weights = dict(zip(SECTOR_ORDER, values))
+        try:
+            allocation = Allocation(weights=weights)
+        except ValueError as e:
+            _print(f"[red]{e}[/red]")
+            _print("[yellow]Please re-enter your allocation.[/yellow]")
+            continue
+
+        # Confirm
+        answer = _input("[bold cyan]  Confirm? (Enter=yes, e=edit) [/bold cyan]").strip().lower()
+        if answer in ("e", "edit"):
+            continue
+
+        return allocation
 
 
 def prompt_revise_allocation(
